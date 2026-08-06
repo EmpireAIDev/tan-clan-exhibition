@@ -2,6 +2,10 @@ html, body {
   margin: 0;
   background: var(--paper);
   min-height: 100%;
+  /* the shared kiosk stylesheet sets overflow:hidden for the no-scroll-bounce
+     kiosk screens — this page is a long scrolling form, so undo that here */
+  overflow: auto;
+  height: auto;
 }
 
 .edit-page {
