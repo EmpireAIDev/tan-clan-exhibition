@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Print — My Family Tree</title>
+<style id="pageSizeStyle"></style>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/print.css" />
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="card card-shadow" id="card">
+    <div class="card-header" id="cardHeader" data-i18n="postcardName">Tan Clan Exhibition</div>
+    <div id="treeMount"></div>
+  </div>
+</div>
+
+<div class="printed-screen" id="printedScreen">
+  <h1 data-i18n="printedTitle">All done!</h1>
+  <p data-i18n="printedSub">Take your family tree home with you.</p>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/state.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/print.js"></script>
+</body>
+</html>
