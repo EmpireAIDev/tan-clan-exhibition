@@ -1,2 +1,6 @@
 firebase-debug.log
 node_modules/
+
+# Local-only staff admin portal — contains hardcoded admin credentials,
+# must never be published to the public repo.
+admin/
