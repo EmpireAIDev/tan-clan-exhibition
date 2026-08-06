@@ -2,46 +2,46 @@
 // of the app that legitimately needs the internet (there's no server without
 // it) and legitimately needs the Firebase SDK — everything else in the kiosk
 // (QnA, tree, migration map, printing) stays fully offline and never loads
-// this file's dependencies. Loaded as a module so it can import the SDK
-// straight from Firebase's CDN — vendoring the modular SDK's internal import
-// graph without a bundler is impractical, and this code path already
-// requires connectivity to reach Firestore.
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentSingleTabManager,
-  doc,
-  collection,
-  setDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// this file's dependencies.
+//
+// Uses the Firebase "compat" (namespaced) build loaded via plain <script>
+// tags rather than the modular SDK's ES modules — module scripts require a
+// same-origin fetch() under the hood, which Chrome blocks entirely over
+// file:// with a CORS error. Since this app is meant to be opened by just
+// double-clicking index.html (no local server), the compat build is the one
+// that actually works here.
+(function () {
+  const app = firebase.initializeApp(window.FIREBASE_CONFIG);
+  const db = firebase.firestore();
+  try {
+    db.enablePersistence({ synchronizeTabs: false }).catch(() => {
+      /* persistence unavailable (private browsing, multiple tabs, etc.) —
+         writes still work, they just won't survive a full offline restart */
+    });
+  } catch (e) {
+    /* ignore */
+  }
 
-const EDIT_BASE_URL = "https://zhengxuanlow.github.io/tan-clan-exhibition/edit/index.html?id=";
+  const EDIT_BASE_URL = "https://zhengxuanlow.github.io/tan-clan-exhibition/edit/index.html?id=";
 
-const app = initializeApp(window.FIREBASE_CONFIG);
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({}) }),
-});
+  // Client-generates the doc ID (no network round-trip needed for this part),
+  // so the share link/QR can be shown immediately even with zero connectivity.
+  // The actual write uses Firestore's offline queue: if there's no connection
+  // right now, it queues locally and syncs automatically the next time this
+  // laptop has any connectivity at all.
+  function createShareLink(visitorData) {
+    const ref = db.collection("submissions").doc();
+    const payload = Object.assign({}, visitorData, {
+      submitted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    ref.set(payload).catch(() => {
+      /* offline — already queued locally by Firestore's persistence layer */
+    });
+    return Promise.resolve({ docId: ref.id, url: EDIT_BASE_URL + ref.id });
+  }
 
-// Client-generates the doc ID (no network round-trip needed for this part),
-// so the share link/QR can be shown immediately even with zero connectivity.
-// The actual write uses Firestore's offline queue: if there's no connection
-// right now, it queues locally and syncs automatically the next time this
-// laptop has any connectivity at all.
-async function createShareLink(visitorData) {
-  const ref = doc(collection(db, "submissions"));
-  const payload = {
-    ...visitorData,
-    submitted: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  setDoc(ref, payload).catch(() => {
-    /* offline — already queued locally by Firestore's persistence layer */
-  });
-  return { docId: ref.id, url: EDIT_BASE_URL + ref.id };
-}
-
-window.Sync = { createShareLink };
-window.dispatchEvent(new Event("sync-ready"));
+  window.Sync = { createShareLink };
+  window.dispatchEvent(new Event("sync-ready"));
+})();

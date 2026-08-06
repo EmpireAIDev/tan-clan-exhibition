@@ -1,18 +1,10 @@
-// Take-home family chart editor. Loaded as a module so it can pull the
-// Firebase SDK straight from Firebase's CDN (see js/sync.js for why this
-// page is the exception to the "no CDN" rule — it only exists because it
-// needs the internet in the first place).
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const app = initializeApp(window.FIREBASE_CONFIG);
-const db = getFirestore(app);
+// Take-home family chart editor. Uses Firebase's "compat" (namespaced)
+// build loaded via plain <script> tags rather than the modular ES-module
+// SDK — module scripts fail with a CORS error if this page is ever opened
+// over file:// (e.g. testing locally), while the compat build works the
+// same everywhere. See js/sync.js for the same reasoning.
+const app = firebase.initializeApp(window.FIREBASE_CONFIG);
+const db = firebase.firestore();
 
 const params = new URLSearchParams(location.search);
 const docId = params.get("id");
@@ -31,14 +23,14 @@ let saveTimer = null;
 async function init() {
   if (!docId) return showNotFound();
   I18n.setLang("en");
-  docRef = doc(db, "submissions", docId);
+  docRef = db.collection("submissions").doc(docId);
   let snap;
   try {
-    snap = await getDoc(docRef);
+    snap = await docRef.get();
   } catch (e) {
     return showNotFound();
   }
-  if (!snap.exists()) return showNotFound();
+  if (!snap.exists) return showNotFound();
 
   data = snap.data();
   loadingState.style.display = "none";
@@ -62,7 +54,7 @@ function queueSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+      await docRef.update(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
       saveStatus.textContent = "All changes saved automatically.";
     } catch (e) {
       saveStatus.textContent = "Couldn't save just now — check your connection. We'll keep trying.";
@@ -202,7 +194,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   data.knowGreatGrandparents = !!(data.greatGrandfather.name || data.greatGrandmother.name);
   data.submitted = true;
   try {
-    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    await docRef.update(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
     submittedBanner.style.display = "block";
   } catch (e) {
     saveStatus.textContent = "Couldn't submit just now — check your connection and try again.";
