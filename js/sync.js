@@ -22,7 +22,7 @@
     /* ignore */
   }
 
-  const EDIT_BASE_URL = "https://zhengxuanlow.github.io/tan-clan-exhibition/edit/index.html?id=";
+  const EDIT_BASE_URL = "https://empireaidev.github.io/tan-clan-exhibition/edit/index.html?id=";
 
   // Client-generates the doc ID (no network round-trip needed for this part),
   // so the share link/QR can be shown immediately even with zero connectivity.
