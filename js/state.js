@@ -15,7 +15,7 @@ function blankPerson() {
 function blankState() {
   return {
     lang: "en",
-    self: { name: "", photo: null },
+    self: { name: "", job: "", photo: null },
     hasSiblings: null, // true/false
     siblingCount: 0,
     siblings: [], // { name, type, job, photo }

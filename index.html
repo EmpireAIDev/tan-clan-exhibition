@@ -31,209 +31,16 @@
       <button class="btn-start" id="startBtn" data-i18n="start">Start</button>
     </section>
 
-    <!-- 1. Self name -->
-    <section class="screen" data-screen="self">
-      <h1 data-i18n="nameLabel">What's your name?</h1>
-      <div class="field">
-        <input type="text" id="selfName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
+    <!-- 1. Family chart -->
+    <section class="screen" data-screen="chart">
+      <h1 data-i18n="chartTitle">Build Your Family Tree</h1>
+      <p class="subtitle" data-i18n="chartSub">Tap any box to fill it in — names, jobs, and photos.</p>
+      <div class="preview-tree-wrap">
+        <div id="chartTree"></div>
       </div>
       <div class="nav-buttons">
         <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="self" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 2. Siblings Y/N -->
-    <section class="screen" data-screen="siblings-yn">
-      <h1 data-i18n="siblingsYN">Do you have any brothers or sisters?</h1>
-      <div class="big-choice" id="siblingsYNChoice">
-        <button data-val="yes" data-i18n="yes">Yes</button>
-        <button data-val="no" data-i18n="no">No</button>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="siblings-yn" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 3. Siblings count -->
-    <section class="screen" data-screen="siblings-count">
-      <h1 data-i18n="siblingsCount">How many brothers or sisters do you have?</h1>
-      <p class="subtitle" data-i18n="siblingsCountHint">(up to 6)</p>
-      <div class="count-grid" id="siblingCountGrid">
-        <button data-val="1">1</button>
-        <button data-val="2">2</button>
-        <button data-val="3">3</button>
-        <button data-val="4">4</button>
-        <button data-val="5">5</button>
-        <button data-val="6">6</button>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="siblings-count" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 4. Sibling details (reused per index) -->
-    <section class="screen" data-screen="siblings-details">
-      <h1 id="siblingDetailsTitle">Sibling</h1>
-      <div class="field">
-        <label data-i18n="siblingName">What's their name?</label>
-        <input type="text" id="siblingName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="siblingType">Are they your...</label>
-        <div class="type-grid" id="siblingTypeGrid">
-          <button data-val="olderBrother" data-i18n="olderBrother">Older Brother</button>
-          <button data-val="youngerBrother" data-i18n="youngerBrother">Younger Brother</button>
-          <button data-val="olderSister" data-i18n="olderSister">Older Sister</button>
-          <button data-val="youngerSister" data-i18n="youngerSister">Younger Sister</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>
-          <span id="siblingJobLabel" data-i18n="siblingJobLabel">What do they do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="siblingJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="siblings-details" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 5. Parents -->
-    <section class="screen" data-screen="parents">
-      <h1 data-i18n="parentsTitle">Let's meet your parents</h1>
-      <div class="field">
-        <label data-i18n="fatherName">What's your dad's name?</label>
-        <input type="text" id="fatherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="fatherJob">What does your dad do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="fatherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="motherName">What's your mom's name?</label>
-        <input type="text" id="motherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="motherJob">What does your mom do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="motherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="originParentsQuestion">Where did your parents live?</label>
-        <p class="subtitle" style="margin:0 0 8px; font-size:14px;" data-i18n="originHint">(pick the closest match, or skip if you're not sure)</p>
-        <div class="place-grid" id="parentsPlaceGrid"></div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="parents" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 6. Grandparents Y/N -->
-    <section class="screen" data-screen="grandparents-yn">
-      <h1 data-i18n="grandparentsYN">Do you know your grandpa and grandma?</h1>
-      <div class="big-choice" id="grandparentsYNChoice">
-        <button data-val="yes" data-i18n="yes">Yes</button>
-        <button data-val="no" data-i18n="no">No</button>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="grandparents-yn" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 7. Grandparents details -->
-    <section class="screen" data-screen="grandparents">
-      <h1 data-i18n="grandparentsTitle">Let's meet your grandparents</h1>
-      <div class="field">
-        <label data-i18n="grandfatherName">What's your grandpa's name?</label>
-        <input type="text" id="grandfatherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="grandfatherJob">What does your grandpa do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="grandfatherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="grandmotherName">What's your grandma's name?</label>
-        <input type="text" id="grandmotherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="grandmotherJob">What does your grandma do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="grandmotherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="originGrandQuestion">Where did your grandparents live?</label>
-        <p class="subtitle" style="margin:0 0 8px; font-size:14px;" data-i18n="originHint">(pick the closest match, or skip if you're not sure)</p>
-        <div class="place-grid" id="grandparentsPlaceGrid"></div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="grandparents" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 8. Great-grandparents Y/N -->
-    <section class="screen" data-screen="greatgrandparents-yn">
-      <h1 data-i18n="greatGrandparentsYN">Do you know your great-grandpa and great-grandma?</h1>
-      <div class="big-choice" id="greatGrandparentsYNChoice">
-        <button data-val="yes" data-i18n="yes">Yes</button>
-        <button data-val="no" data-i18n="no">No</button>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="greatgrandparents-yn" data-i18n="next">Next</button>
-      </div>
-    </section>
-
-    <!-- 9. Great-grandparents details -->
-    <section class="screen" data-screen="greatgrandparents">
-      <h1 data-i18n="greatGrandparentsTitle">Let's meet your great-grandparents</h1>
-      <div class="field">
-        <label data-i18n="greatGrandfatherName">What's your great-grandpa's name?</label>
-        <input type="text" id="greatGrandfatherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="greatGrandfatherJob">What did your great-grandpa do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="greatGrandfatherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="greatGrandmotherName">What's your great-grandma's name?</label>
-        <input type="text" id="greatGrandmotherName" data-i18n-placeholder="namePlaceholder" maxlength="30" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label>
-          <span data-i18n="greatGrandmotherJob">What did your great-grandma do?</span>
-          <span class="opt" data-i18n="optional">(optional)</span>
-        </label>
-        <input type="text" id="greatGrandmotherJob" data-i18n-placeholder="jobPlaceholder" maxlength="40" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label data-i18n="originGGQuestion">Where did your great-grandparents live?</label>
-        <p class="subtitle" style="margin:0 0 8px; font-size:14px;" data-i18n="originHint">(pick the closest match, or skip if you're not sure)</p>
-        <div class="place-grid" id="greatgrandparentsPlaceGrid"></div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="greatgrandparents" data-i18n="next">Next</button>
+        <button class="btn btn-primary" data-next="chart" data-i18n="next">Next</button>
       </div>
     </section>
 
@@ -305,6 +112,8 @@
 <script src="js/state.js"></script>
 <script src="js/places.js"></script>
 <script src="js/tree.js"></script>
+<script src="js/photo-capture.js"></script>
+<script src="js/chart-editor.js"></script>
 <script src="js/migration-map.js"></script>
 <script src="js/flow.js"></script>
 
