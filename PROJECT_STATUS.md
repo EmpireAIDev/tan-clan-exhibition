@@ -98,7 +98,7 @@ repos; it went offline once already when the repo was briefly made private.
 | `js/flow.js` | Kiosk screen navigation, validation, idle auto-reset (3 min) |
 | `js/sync.js` | Firestore write + share-link/QR generation (Firebase **compat** SDK) |
 | `js/firebase-config.js` | Public Firebase project config (see note below — this is *not* a secret) |
-| `js/i18n.js` | English/繁體中文 dictionary |
+| `js/i18n.js` | English/简体中文 dictionary |
 | `edit/app.js` | Take-home editor logic |
 | `admin/main.js` | Admin portal logic — **contains the admin Firebase Auth password, gitignored** |
 
