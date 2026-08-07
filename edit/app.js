@@ -62,34 +62,8 @@ function queueSave() {
   }, 800);
 }
 
-async function compressImage(file) {
-  const dataUrl = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-  const img = await new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = dataUrl;
-  });
-  const maxDim = 240;
-  let { width, height } = img;
-  if (width > height && width > maxDim) {
-    height = Math.round(height * (maxDim / width));
-    width = maxDim;
-  } else if (height > maxDim) {
-    width = Math.round(width * (maxDim / height));
-    height = maxDim;
-  }
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL("image/jpeg", 0.72);
-}
+// compressImageFile() comes from js/photo-capture.js (shared with the
+// kiosk chart editor and its webcam capture flow).
 
 // Builds one editable card for a person. `person` is the live object inside
 // `data` (mutated directly), `onChange` runs after any field updates.
@@ -143,7 +117,7 @@ function personCard(container, title, person) {
   photoInput.addEventListener("change", async () => {
     const file = photoInput.files[0];
     if (!file) return;
-    person.photo = await compressImage(file);
+    person.photo = await compressImageFile(file);
     photoImg.src = person.photo;
     renderPreview();
     queueSave();

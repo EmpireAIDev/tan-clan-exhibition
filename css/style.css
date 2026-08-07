@@ -481,6 +481,141 @@ button {
   font-weight: 700;
 }
 
+/* --- webcam modal --- */
+.webcam-modal { width: 420px; text-align: center; }
+.webcam-video-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 4px 0 12px;
+}
+.webcam-video-wrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror, feels natural for a selfie-style shot */
+}
+
+/* --- photo popover (avatar tap menu) --- */
+.photo-popover {
+  position: absolute;
+  z-index: 60;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+}
+.photo-popover button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.photo-popover button:hover { background: var(--orange-light); }
+.photo-popover button.danger { color: #e0463f; }
+
+/* --- editable chart --- */
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 118px;
+}
+.chart-card .avatar {
+  cursor: pointer;
+  position: relative;
+}
+.chart-card .avatar:hover { box-shadow: 0 0 0 3px var(--orange-light); }
+.chart-name-input, .chart-job-input {
+  width: 100%;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  padding: 2px 4px;
+}
+.chart-name-input {
+  font-weight: 700;
+  font-size: 13px;
+}
+.chart-job-input {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+.chart-name-input:hover, .chart-job-input:hover,
+.chart-name-input:focus, .chart-job-input:focus {
+  border-color: var(--border);
+  background: #fff;
+}
+.chart-name-input::placeholder, .chart-job-input::placeholder {
+  color: #c9c2b3;
+  font-style: normal;
+}
+.chart-relation-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.origin-chip {
+  margin-top: 4px;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: #fff;
+  color: var(--muted);
+}
+.origin-chip.set {
+  border-style: solid;
+  border-color: var(--orange);
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.add-sibling-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 90px;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  align-self: center;
+}
+.add-sibling-card:hover { border-color: var(--orange); color: var(--orange); }
+
+.remove-sibling-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e0463f;
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chart-card-wrap { position: relative; }
+
 /* --- idle overlay --- */
 .idle-overlay {
   position: fixed;
