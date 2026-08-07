@@ -37,7 +37,40 @@
       mapControl = renderMigrationMap(document.getElementById("migrationMap"), d, { animated: true });
     } else if (id === "preview") {
       renderPreview();
+      ensureShareLink();
     }
+  }
+
+  // Silently starts creating the take-home share link as soon as the
+  // preview screen is reached, so it's already available (and can be
+  // printed as a QR on the postcard) even if the visitor never clicks
+  // "Get a link to finish at home" themselves. Sync.createShareLink is
+  // idempotent, so this is safe to call again later (e.g. the explicit
+  // button click, or navigating back to preview) without creating a
+  // second submission.
+  function syncReadyForPrint(timeoutMs) {
+    return new Promise((resolve, reject) => {
+      if (window.Sync) return resolve();
+      const timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      window.addEventListener(
+        "sync-ready",
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        { once: true }
+      );
+    });
+  }
+  function ensureShareLink() {
+    if (State.data.shareUrl) return;
+    syncReadyForPrint(10000)
+      .then(() => window.Sync.createShareLink(State.data))
+      .then(() => State.save())
+      .catch(() => {
+        /* offline or Firebase SDK never loaded — postcard just prints
+           without the corner QR this time, not a crash */
+      });
   }
 
   function renderChart() {

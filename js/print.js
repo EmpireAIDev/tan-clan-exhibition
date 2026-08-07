@@ -26,6 +26,23 @@
   const treeMount = document.getElementById("treeMount");
   renderFamilyTree(treeMount, data);
 
+  // Small scannable QR in the corner, linking to the same take-home page as
+  // the on-screen share step — only shown if a link was actually created
+  // (js/flow.js tries to have one ready by the time you reach print, but a
+  // fully-offline visit that never got connectivity simply won't have one).
+  if (data.shareUrl) {
+    try {
+      const qr = qrcode(0, "M");
+      qr.addData(data.shareUrl);
+      qr.make();
+      const cardQr = document.getElementById("cardQr");
+      cardQr.innerHTML = qr.createSvgTag({ cellSize: 2, margin: 1 });
+      cardQr.classList.add("visible");
+    } catch (e) {
+      /* corner QR is a nice-to-have, never block printing over it */
+    }
+  }
+
   let printTriggered = false;
   let returned = false;
 
