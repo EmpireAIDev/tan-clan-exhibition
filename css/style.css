@@ -98,6 +98,7 @@ button {
 }
 .screen.active { display: block; }
 .screen[data-screen="preview"] { max-width: 1140px; }
+.screen[data-screen="chart"] { max-width: 1100px; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -393,6 +394,29 @@ button {
 .migration-pin.visible .migration-label,
 .migration-pin.visible .migration-tag { opacity: 1; }
 
+/* --- family chart: two-panel layout --- */
+.chart-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  text-align: left;
+}
+.chart-left {
+  flex: 1 1 38%;
+  position: sticky;
+  top: 0;
+}
+.chart-left .preview-tree-wrap {
+  margin: 0;
+  max-height: 58vh;
+}
+.chart-right {
+  flex: 1 1 58%;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 4px 8px 4px 0;
+}
+
 /* --- preview screen --- */
 .preview-layout {
   display: flex;
@@ -522,49 +546,72 @@ button {
 .photo-popover button:hover { background: var(--orange-light); }
 .photo-popover button.danger { color: #e0463f; }
 
-/* --- editable chart --- */
-.chart-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 118px;
-}
-.chart-card .avatar {
-  cursor: pointer;
-  position: relative;
-}
-.chart-card .avatar:hover { box-shadow: 0 0 0 3px var(--orange-light); }
-.chart-name-input, .chart-job-input {
-  width: 100%;
-  text-align: center;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  font-family: inherit;
-  padding: 2px 4px;
-}
-.chart-name-input {
+/* --- family chart question panel (right side) --- */
+.question-section { margin-bottom: 28px; }
+.question-section:last-child { margin-bottom: 0; }
+.question-section-title {
+  font-size: 15px;
   font-weight: 700;
+  color: var(--orange);
+  margin: 0 0 14px;
+}
+.question-person {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.question-row { margin-bottom: 10px; }
+.question-row:last-child { margin-bottom: 0; }
+.question-row label {
+  display: block;
   font-size: 13px;
-}
-.chart-job-input {
-  font-size: 11px;
+  font-weight: 600;
   color: var(--muted);
-  font-style: italic;
+  margin-bottom: 6px;
 }
-.chart-name-input:hover, .chart-job-input:hover,
-.chart-name-input:focus, .chart-job-input:focus {
-  border-color: var(--border);
+.question-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.q-avatar-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+}
+.q-avatar-btn.avatar-has-photo { padding: 0; }
+.q-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+.question-input {
+  flex: 1;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: inherit;
   background: #fff;
 }
-.chart-name-input::placeholder, .chart-job-input::placeholder {
-  color: #c9c2b3;
-  font-style: normal;
-}
-.chart-relation-label {
-  font-size: 11px;
+.question-input:focus { border-color: var(--orange); outline: none; }
+.question-hint {
+  font-size: 12px;
   color: var(--muted);
+  margin: 6px 0 0;
 }
+.origin-question { margin-top: 4px; }
 
 .origin-chip {
   margin-top: 4px;
@@ -583,38 +630,35 @@ button {
 }
 
 .add-sibling-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 90px;
-  height: 90px;
+  display: block;
+  width: 100%;
+  padding: 12px;
   border: 2px dashed var(--border);
   border-radius: 16px;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
-  align-self: center;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
 }
 .add-sibling-card:hover { border-color: var(--orange); color: var(--orange); }
 
 .remove-sibling-btn {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #e0463f;
   color: #fff;
   border: 2px solid #fff;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.chart-card-wrap { position: relative; }
 
 /* --- idle overlay --- */
 .idle-overlay {
@@ -636,4 +680,11 @@ button {
 @media (max-width: 560px) {
   .couple { gap: 14px; }
   .person { width: 84px; }
+}
+
+@media (max-width: 760px) {
+  .chart-layout { flex-direction: column; }
+  .chart-left { position: static; width: 100%; }
+  .chart-left .preview-tree-wrap { max-height: 34vh; }
+  .chart-right { max-height: none; overflow-y: visible; width: 100%; }
 }

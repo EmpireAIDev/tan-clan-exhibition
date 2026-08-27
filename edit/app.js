@@ -33,6 +33,7 @@ async function init() {
   if (!snap.exists) return showNotFound();
 
   data = snap.data();
+  data.dialogueAnswers = data.dialogueAnswers || {};
   loadingState.style.display = "none";
   editState.style.display = "block";
   if (data.submitted) submittedBanner.style.display = "block";
@@ -130,6 +131,53 @@ function personCard(container, title, person) {
   container.appendChild(card);
 }
 
+// Intergenerational dialogue questions — never asked at the kiosk, only
+// here in the take-home editor. DIALOGUE_QUESTIONS comes from
+// js/dialogue-questions.js. This page doesn't use the I18n dictionary
+// elsewhere (English-only by design so far), but these questions are meant
+// to be answered by relatives across generations — including ones who may
+// only read Chinese — so they follow data.lang (saved from the kiosk)
+// directly rather than adding full i18n wiring to the rest of this page.
+function dialogueSection(container) {
+  const lang = data.lang === "zh" ? "zh" : "en";
+  sectionTitle(container, lang === "zh" ? "家族故事" : "Family Stories");
+
+  const hint = document.createElement("p");
+  hint.className = "subtitle";
+  hint.style.margin = "0 0 16px";
+  hint.textContent =
+    lang === "zh"
+      ? "和不同辈分的家人聊聊天，把他们分享的故事记录下来。"
+      : "Chat with family members from different generations and write down what they share.";
+  container.appendChild(hint);
+
+  DIALOGUE_QUESTIONS.forEach((q) => {
+    const card = document.createElement("div");
+    card.className = "person-card dialogue-card";
+
+    const heading = document.createElement("h3");
+    heading.textContent = q[lang];
+    card.appendChild(heading);
+
+    const ask = document.createElement("p");
+    ask.className = "dialogue-ask";
+    ask.textContent = "→ " + (lang === "zh" ? q.askZh : q.askEn);
+    card.appendChild(ask);
+
+    const textarea = document.createElement("textarea");
+    textarea.className = "dialogue-answer";
+    textarea.rows = 3;
+    textarea.value = data.dialogueAnswers[q.id] || "";
+    textarea.addEventListener("input", () => {
+      data.dialogueAnswers[q.id] = textarea.value;
+      queueSave();
+    });
+    card.appendChild(textarea);
+
+    container.appendChild(card);
+  });
+}
+
 function sectionTitle(container, text) {
   const h = document.createElement("h2");
   h.className = "section-title";
@@ -161,6 +209,8 @@ function renderForm() {
   sectionTitle(formSections, "Great-Grandparents");
   personCard(formSections, "Great-Grandfather", data.greatGrandfather);
   personCard(formSections, "Great-Grandmother", data.greatGrandmother);
+
+  dialogueSection(formSections);
 }
 
 document.getElementById("submitBtn").addEventListener("click", async () => {

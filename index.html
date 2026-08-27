@@ -34,9 +34,14 @@
     <!-- 1. Family chart -->
     <section class="screen" data-screen="chart">
       <h1 data-i18n="chartTitle">Build Your Family Tree</h1>
-      <p class="subtitle" data-i18n="chartSub">Tap any box to fill it in — names, jobs, and photos.</p>
-      <div class="preview-tree-wrap">
-        <div id="chartTree"></div>
+      <p class="subtitle" data-i18n="chartSub">Answer the questions on the right — your family tree fills in on the left as you go.</p>
+      <div class="chart-layout">
+        <div class="chart-left">
+          <div class="preview-tree-wrap" id="chartTreeWrap">
+            <div id="chartTree"></div>
+          </div>
+        </div>
+        <div class="chart-right" id="chartQuestions"></div>
       </div>
       <div class="nav-buttons">
         <button class="btn btn-ghost" data-back data-i18n="back">Back</button>

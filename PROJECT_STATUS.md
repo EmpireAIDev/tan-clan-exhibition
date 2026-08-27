@@ -54,14 +54,23 @@ repos; it went offline once already when the repo was briefly made private.
 
 ## What's built and verified working end-to-end
 
-1. **Family chart QnA** (`js/chart-editor.js`, latest revamp) — the whole
-   tree renders as one editable organization chart instead of a
-   step-by-step wizard. Tap a name/job to type inline; tap an avatar for
-   **Take Photo** (webcam) / **Upload** / **Remove**; tap a generation's
-   "Where did they live?" chip to set migration-map data; **+ Add
-   sibling** / **×** to manage up to 6 siblings. A generation counts as
+1. **Family chart QnA** (`js/chart-editor.js`, latest revamp) — two-panel
+   layout on the `chart` screen: **left** (`js/flow.js`'s `renderChartLeft`)
+   is a live read-only preview using `tree.js`'s `renderFamilyTree`, always
+   visible while filling the form. **Right** (`renderQuestionPanel` in
+   `js/chart-editor.js`) is a scrollable list of question cards — one per
+   person, phrased as a question ("What's your dad's name?"), each with a
+   tappable avatar for **Take Photo** (webcam) / **Upload** / **Remove**,
+   name, job, and (for siblings) older/younger + brother/sister type.
+   Per-generation "Where did they live?" questions set migration-map data.
+   **+ Add sibling** / **×** manage up to 6 siblings. A generation counts as
    "known" purely by whether its name fields got filled in (no separate
-   yes/no toggle). Required: self, father, mother names.
+   yes/no toggle) — `renderChartLeft` derives `knowGrandparents` /
+   `knowGreatGrandparents` on every keystroke so the left tree grows live.
+   Required: self, father, mother names. Typing in the right panel never
+   re-renders the right panel itself (only the left tree), so there's no
+   focus/cursor loss while typing; only structural changes (add/remove
+   sibling) re-render both.
 2. **Migration map** (`js/migration-map.js`) — custom stylized SVG map
    (China → Hong Kong/Taiwan → Southeast Asia → Singapore), animates
    pin-by-pin through whichever generations have an origin set, "Watch
@@ -77,13 +86,21 @@ repos; it went offline once already when the repo was briefly made private.
    `edit/`.
 5. **Take-home editor** (`edit/`) — loads a submission by ID from the URL
    (`?id=...`), lets the family fix names/jobs, upload real photos, and
-   submit for the competition. Live on GitHub Pages.
+   submit for the competition. Also the *only* place the 5 fixed
+   **intergenerational dialogue questions** (`js/dialogue-questions.js`,
+   e.g. "What was Grandpa's first job? → Ask Grandma") are shown and
+   answered — deliberately never surfaced during the kiosk chart step.
+   Answers save into `data.dialogueAnswers[id]` on the same debounced
+   auto-save as everything else, and follow `data.lang` (en/zh) even
+   though the rest of this page's copy is English-only. Live on GitHub
+   Pages.
 6. **Admin portal** (`admin/`, **local-only, gitignored**) — silently
    signs in with one Firebase Auth account (no visible login form), lists
    every submission (Firestore `list` is otherwise blocked by security
    rules — this is the one identity allowed to bypass that), click into
    any submission to preview and print it (family tree and/or migration
-   map) using the same tested print pipeline.
+   map) using the same tested print pipeline. Detail view also shows a
+   read-only "Family Stories" readout of any answered dialogue questions.
 
 ## Key files
 
@@ -91,7 +108,8 @@ repos; it went offline once already when the repo was briefly made private.
 |---|---|
 | `js/state.js` | Central data model (`State.data`) + localStorage persistence + `PAPER_SIZES` |
 | `js/tree.js` | Read-only tree renderer + SVG connector lines — reused everywhere (preview, print, edit, admin) |
-| `js/chart-editor.js` | The editable chart (kiosk QnA) — builds on `tree.js`'s layout |
+| `js/chart-editor.js` | Right-panel question editor for the kiosk chart step — left-panel live preview lives in `js/flow.js`'s `renderChartLeft` |
+| `js/dialogue-questions.js` | The 5 fixed intergenerational dialogue questions (en/zh) — used by `edit/app.js` and `admin/main.js`, never by the kiosk |
 | `js/photo-capture.js` | Shared image compress/resize helper + webcam capture modal — used by kiosk chart and `edit/app.js` |
 | `js/migration-map.js` | Migration map SVG + animation, shared by on-screen reveal and print |
 | `js/places.js` | Preset city list for migration origins |

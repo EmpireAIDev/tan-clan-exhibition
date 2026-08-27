@@ -73,9 +73,23 @@
       });
   }
 
+  // Left panel: a read-only live preview of the tree (tree.js's renderFamilyTree,
+  // same renderer used by the preview screen and printing). Rebuilding it on
+  // every keystroke is cheap and has no focus to lose, unlike the right panel.
+  function renderChartLeft() {
+    const d = State.data;
+    d.knowGrandparents = !!(d.grandfather.name.trim() || d.grandmother.name.trim());
+    d.knowGreatGrandparents = !!(d.greatGrandfather.name.trim() || d.greatGrandmother.name.trim());
+    renderFamilyTree(document.getElementById("chartTree"), d);
+  }
+
   function renderChart() {
-    renderEditableChart(document.getElementById("chartTree"), State.data, {
-      onPersonChange: () => State.save(),
+    renderChartLeft();
+    renderQuestionPanel(document.getElementById("chartQuestions"), State.data, {
+      onPersonChange: () => {
+        State.save();
+        renderChartLeft();
+      },
       onStructuralChange: () => {
         State.save();
         renderChart();
@@ -147,8 +161,9 @@
   }
 
   function shakeChartField(role) {
-    const input = document.querySelector('#chartTree [data-role="' + role + '"] .chart-name-input');
+    const input = document.querySelector('#chartQuestions [data-role="' + role + '"] .question-input[data-field="name"]');
     if (!input) return;
+    input.scrollIntoView({ block: "center", behavior: "smooth" });
     input.style.borderColor = "#e0463f";
     input.focus();
     setTimeout(() => (input.style.borderColor = ""), 700);

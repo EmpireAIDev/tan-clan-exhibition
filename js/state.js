@@ -32,6 +32,10 @@ function blankState() {
       grandparents: null,
       parents: null,
     },
+    // Intergenerational dialogue question answers — never asked at the
+    // kiosk; only collected/edited later in edit/ (see js/dialogue-questions.js).
+    // Keyed by question id, e.g. { grandpaFirstJob: "..." }.
+    dialogueAnswers: {},
   };
 }
 
