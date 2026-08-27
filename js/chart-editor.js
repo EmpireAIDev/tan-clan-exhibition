@@ -31,11 +31,33 @@ function openPopover(anchorEl, buildContent) {
   document.body.appendChild(pop);
 
   const rect = anchorEl.getBoundingClientRect();
+  const viewportW = document.documentElement.clientWidth;
+  const viewportH = window.innerHeight;
+
+  // Cap the popover's height to the viewport (minus margins) so long lists
+  // (e.g. the "where did they live?" place picker) scroll inside the
+  // popover itself instead of silently overflowing past the bottom of the
+  // screen — the kiosk's `overflow: hidden` body means anything past the
+  // viewport edge is otherwise completely unreachable, not just hidden
+  // behind a scrollbar.
+  pop.style.maxHeight = Math.max(160, viewportH - 24) + "px";
+
   const popRect = pop.getBoundingClientRect();
   let left = rect.left + window.scrollX + rect.width / 2 - popRect.width / 2;
-  left = Math.max(8, Math.min(left, window.scrollX + document.documentElement.clientWidth - popRect.width - 8));
+  left = Math.max(8, Math.min(left, window.scrollX + viewportW - popRect.width - 8));
   pop.style.left = left + "px";
-  pop.style.top = rect.bottom + window.scrollY + 6 + "px";
+
+  const spaceBelow = viewportH - rect.bottom;
+  const spaceAbove = rect.top;
+  let top;
+  if (popRect.height + 14 > spaceBelow && spaceAbove > spaceBelow) {
+    // Not enough room below, but more room above the anchor: open upward.
+    top = rect.top + window.scrollY - 6 - Math.min(popRect.height, spaceAbove - 12);
+  } else {
+    top = rect.bottom + window.scrollY + 6;
+  }
+  top = Math.max(8, Math.min(top, window.scrollY + viewportH - 8 - Math.min(popRect.height, viewportH - 24)));
+  pop.style.top = top + "px";
 
   activePopover = pop;
   setTimeout(() => document.addEventListener("click", onDocClickCloseSoon, true), 0);

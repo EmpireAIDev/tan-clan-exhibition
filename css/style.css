@@ -534,6 +534,8 @@ button {
   display: flex;
   flex-direction: column;
   min-width: 140px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .photo-popover button {
   border: none;
