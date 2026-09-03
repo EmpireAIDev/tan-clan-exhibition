@@ -1,8 +1,11 @@
 // DREAMS 2026 visitor survey screen — shown once, before the family chart.
 // Builds the form into a container (see index.html's #surveyForm) and
 // exposes render/validate/buildCsvRow so js/flow.js can own navigation the
-// same way it does for every other screen. Options/labels/PDPA text live in
-// js/survey-questions.js; local storage + CSV export live in js/csv-log.js.
+// same way it does for every other screen. Fixed UI text lives in
+// js/i18n.js (bilingual, like the rest of the kiosk); option lists + PDPA
+// text live in js/survey-questions.js (also bilingual, {en,zh} per item —
+// see surveyOptionLabel there). CSV output always uses the English label
+// regardless of display language — see buildCsvRow below.
 const SurveyScreen = (function () {
   function fieldWrap(labelText, hintText) {
     const wrap = document.createElement("div");
@@ -32,7 +35,7 @@ const SurveyScreen = (function () {
     options.forEach((opt) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.textContent = opt.label;
+      btn.textContent = surveyOptionLabel(opt);
       if (getCurrent() === opt.key) btn.classList.add("selected");
       btn.addEventListener("click", () => {
         onSelect(opt.key);
@@ -63,9 +66,9 @@ const SurveyScreen = (function () {
     const captions = document.createElement("div");
     captions.className = "rating-captions";
     const lo = document.createElement("span");
-    lo.textContent = "1 = Not meaningful to me";
+    lo.textContent = I18n.t("surveyRatingLow");
     const hi = document.createElement("span");
-    hi.textContent = "5 = Very meaningful to me";
+    hi.textContent = I18n.t("surveyRatingHigh");
     captions.appendChild(lo);
     captions.appendChild(hi);
     wrap.appendChild(captions);
@@ -90,19 +93,19 @@ const SurveyScreen = (function () {
     }
 
     options.forEach((opt) => {
-      const cb = makeRow(opt.key, opt.label);
+      const cb = makeRow(opt.key, surveyOptionLabel(opt));
       cb.addEventListener("change", () => onToggle(opt.key, cb.checked));
     });
 
     const otherInput = document.createElement("input");
     otherInput.type = "text";
     otherInput.className = "other-input";
-    otherInput.placeholder = "Please specify";
+    otherInput.placeholder = I18n.t("surveyOtherPlaceholder");
     otherInput.value = getOther() || "";
     otherInput.style.display = selectedArray.includes("other") ? "block" : "none";
     otherInput.addEventListener("input", () => onOtherInput(otherInput.value));
 
-    const otherCb = makeRow("other", "Other:");
+    const otherCb = makeRow("other", I18n.t("surveyOtherPrompt"));
     otherCb.addEventListener("change", () => {
       onToggle("other", otherCb.checked);
       otherInput.style.display = otherCb.checked ? "block" : "none";
@@ -141,13 +144,13 @@ const SurveyScreen = (function () {
     container.innerHTML = "";
 
     // ---- Section 1 ----
-    sectionHeading(container, "Section 1 — Your Experience Today");
+    sectionHeading(container, I18n.t("surveySection1"));
 
-    const ratingWrap = fieldWrap("How did you find the DREAMS exhibition?");
+    const ratingWrap = fieldWrap(I18n.t("surveyRatingQuestion"));
     ratingRow(ratingWrap, () => s.rating, (v) => { s.rating = v; State.save(); });
     container.appendChild(ratingWrap);
 
-    const interestsWrap = fieldWrap("Which parts interested you most?", "(select all that apply)");
+    const interestsWrap = fieldWrap(I18n.t("surveyInterestsQuestion"), I18n.t("surveySelectAll"));
     multiSelectList(
       interestsWrap,
       EXHIBITION_INTERESTS,
@@ -162,9 +165,7 @@ const SurveyScreen = (function () {
     );
     container.appendChild(interestsWrap);
 
-    const rootsWrap = fieldWrap(
-      "After today's experience, would you like to discover more about your own roots, family story or heritage?"
-    );
+    const rootsWrap = fieldWrap(I18n.t("surveyRootsQuestion"));
     singleSelectGrid(rootsWrap, ROOTS_INTEREST_OPTIONS, () => s.rootsInterest, (key) => {
       s.rootsInterest = key;
       State.save();
@@ -172,9 +173,9 @@ const SurveyScreen = (function () {
     container.appendChild(rootsWrap);
 
     // ---- Section 2 ----
-    sectionHeading(container, "Section 2 — What Would You Like OOY CIRCLE To Do Next?");
+    sectionHeading(container, I18n.t("surveySection2"));
 
-    const futureWrap = fieldWrap("Which future activities would interest you?", "(select all that apply)");
+    const futureWrap = fieldWrap(I18n.t("surveyFutureQuestion"), I18n.t("surveySelectAll"));
     multiSelectList(
       futureWrap,
       FUTURE_ACTIVITIES,
@@ -189,10 +190,7 @@ const SurveyScreen = (function () {
     );
     container.appendChild(futureWrap);
 
-    const nextChapterWrap = fieldWrap(
-      "Is there something you would like to see in the next chapter of OOY CIRCLE?",
-      "(optional)"
-    );
+    const nextChapterWrap = fieldWrap(I18n.t("surveyNextChapterQuestion"), I18n.t("optional"));
     const nextChapterInput = document.createElement("textarea");
     nextChapterInput.rows = 3;
     nextChapterInput.value = s.nextChapterSuggestion || "";
@@ -204,9 +202,9 @@ const SurveyScreen = (function () {
     container.appendChild(nextChapterWrap);
 
     // ---- Section 3 ----
-    sectionHeading(container, "Section 3 — About You");
+    sectionHeading(container, I18n.t("surveySection3"));
 
-    const nameWrap = fieldWrap("Name");
+    const nameWrap = fieldWrap(I18n.t("surveyNameLabel"));
     const nameInput = document.createElement("input");
     nameInput.type = "text";
     nameInput.value = s.name || "";
@@ -214,15 +212,15 @@ const SurveyScreen = (function () {
     nameWrap.appendChild(nameInput);
     container.appendChild(nameWrap);
 
-    const ageWrap = fieldWrap("Age group");
+    const ageWrap = fieldWrap(I18n.t("surveyAgeGroupLabel"));
     singleSelectGrid(ageWrap, AGE_GROUPS, () => s.ageGroup, (key) => { s.ageGroup = key; State.save(); });
     container.appendChild(ageWrap);
 
-    const genderWrap = fieldWrap("Gender");
+    const genderWrap = fieldWrap(I18n.t("surveyGenderLabel"));
     singleSelectGrid(genderWrap, GENDERS, () => s.gender, (key) => { s.gender = key; State.save(); });
     container.appendChild(genderWrap);
 
-    const hobbiesWrap = fieldWrap("Your hobbies/interests");
+    const hobbiesWrap = fieldWrap(I18n.t("surveyHobbiesLabel"));
     const hobbiesInput = document.createElement("input");
     hobbiesInput.type = "text";
     hobbiesInput.value = s.hobbies || "";
@@ -233,7 +231,7 @@ const SurveyScreen = (function () {
     const contactWrap = document.createElement("div");
     contactWrap.id = "surveyContactFields";
 
-    const mobileWrap = fieldWrap("Mobile / WhatsApp");
+    const mobileWrap = fieldWrap(I18n.t("surveyMobileLabel"));
     const mobileInput = document.createElement("input");
     mobileInput.type = "tel";
     mobileInput.value = s.mobile || "";
@@ -241,7 +239,7 @@ const SurveyScreen = (function () {
     mobileWrap.appendChild(mobileInput);
     contactWrap.appendChild(mobileWrap);
 
-    const emailWrap = fieldWrap("Email");
+    const emailWrap = fieldWrap(I18n.t("surveyEmailLabel"));
     const emailInput = document.createElement("input");
     emailInput.type = "email";
     emailInput.value = s.email || "";
@@ -251,24 +249,23 @@ const SurveyScreen = (function () {
 
     const contactHint = document.createElement("p");
     contactHint.className = "survey-hint";
-    contactHint.textContent =
-      "At least one of these is only required if you join OOY CIRCLE or ask to be kept informed below.";
+    contactHint.textContent = I18n.t("surveyContactHint");
     contactWrap.appendChild(contactHint);
 
     container.appendChild(contactWrap);
 
     // ---- Section 4 ----
-    sectionHeading(container, "Section 4 — Continue the Journey");
+    sectionHeading(container, I18n.t("surveySection4"));
     const section4Sub = document.createElement("p");
     section4Sub.className = "survey-hint";
-    section4Sub.textContent = "Would you like to be part of what comes next?";
+    section4Sub.textContent = I18n.t("surveySection4Sub");
     container.appendChild(section4Sub);
 
     toggleCard(
       container,
       "joinCircleCard",
-      "Join OOY CIRCLE",
-      "I would like to become an OOY CIRCLE member. Membership is currently complimentary.",
+      I18n.t("surveyJoinTitle"),
+      I18n.t("surveyJoinDesc"),
       s.joinCircle,
       (checked) => { s.joinCircle = checked; State.save(); }
     );
@@ -276,14 +273,14 @@ const SurveyScreen = (function () {
     toggleCard(
       container,
       "keepInformedCard",
-      "Keep me informed",
-      "I would like to receive information about future OOY CIRCLE programmes, events and opportunities.",
+      I18n.t("surveyKeepInformedTitle"),
+      I18n.t("surveyKeepInformedDesc"),
       s.keepInformed,
       (checked) => { s.keepInformed = checked; State.save(); }
     );
 
     const contributeWrap = document.createElement("div");
-    const contributeDetailsWrap = fieldWrap("How might you like to contribute?", "(optional)");
+    const contributeDetailsWrap = fieldWrap(I18n.t("surveyContributeDetailsLabel"), I18n.t("optional"));
     const contributeDetailsInput = document.createElement("textarea");
     contributeDetailsInput.rows = 2;
     contributeDetailsInput.value = s.contributeDetails || "";
@@ -297,8 +294,8 @@ const SurveyScreen = (function () {
     toggleCard(
       container,
       "contributeCard",
-      "I would like to contribute",
-      "I am interested in volunteering, sharing my skills or helping with future OOY CIRCLE activities.",
+      I18n.t("surveyContributeTitle"),
+      I18n.t("surveyContributeDesc"),
       s.contribute,
       (checked) => {
         s.contribute = checked;
@@ -310,15 +307,15 @@ const SurveyScreen = (function () {
     container.appendChild(contributeWrap);
 
     // ---- Section 5 ----
-    sectionHeading(container, "Section 5 — Personal Data / PDPA");
+    sectionHeading(container, I18n.t("surveySection5"));
     const notice = document.createElement("div");
     notice.className = "pdpa-notice";
     const noticeTitle = document.createElement("h3");
-    noticeTitle.textContent = "Personal Data Notice";
+    noticeTitle.textContent = I18n.t("surveyPdpaTitle");
     notice.appendChild(noticeTitle);
     PDPA_NOTICE_PARAGRAPHS.forEach((p) => {
       const para = document.createElement("p");
-      para.textContent = p;
+      para.textContent = I18n.lang === "zh" ? p.zh : p.en;
       notice.appendChild(para);
     });
     container.appendChild(notice);
@@ -327,7 +324,7 @@ const SurveyScreen = (function () {
       container,
       "pdpaConsentCard",
       "",
-      "I acknowledge that I have read the Personal Data Notice and consent to the collection, use and disclosure of the information I provide for the purposes indicated in this form.",
+      I18n.t("surveyPdpaConsentLabel"),
       s.pdpaConsent,
       (checked) => { s.pdpaConsent = checked; State.save(); }
     );
@@ -354,15 +351,18 @@ const SurveyScreen = (function () {
     return true;
   }
 
-  function labelFor(options, key) {
+  // CSV output stays English regardless of display language, so exported
+  // data isn't split across two languages depending on which visitor
+  // answered it — see js/survey-questions.js.
+  function labelForEn(options, key) {
     const opt = options.find((o) => o.key === key);
-    return opt ? opt.label : "";
+    return opt ? opt.en : "";
   }
 
-  function formatMulti(selectedKeys, options, otherText) {
+  function formatMultiEn(selectedKeys, options, otherText) {
     const labels = selectedKeys
       .filter((k) => k !== "other")
-      .map((k) => labelFor(options, k))
+      .map((k) => labelForEn(options, k))
       .filter(Boolean);
     if (selectedKeys.includes("other")) {
       labels.push(otherText && otherText.trim() ? "Other: " + otherText.trim() : "Other");
@@ -377,11 +377,11 @@ const SurveyScreen = (function () {
       now,
       SURVEY_EVENT_SOURCE,
       s.rating || "",
-      formatMulti(s.interests, EXHIBITION_INTERESTS, s.interestsOther),
-      labelFor(ROOTS_INTEREST_OPTIONS, s.rootsInterest),
-      formatMulti(s.futurePrograms, FUTURE_ACTIVITIES, s.futureProgramsOther),
-      labelFor(AGE_GROUPS, s.ageGroup),
-      labelFor(GENDERS, s.gender),
+      formatMultiEn(s.interests, EXHIBITION_INTERESTS, s.interestsOther),
+      labelForEn(ROOTS_INTEREST_OPTIONS, s.rootsInterest),
+      formatMultiEn(s.futurePrograms, FUTURE_ACTIVITIES, s.futureProgramsOther),
+      labelForEn(AGE_GROUPS, s.ageGroup),
+      labelForEn(GENDERS, s.gender),
       s.hobbies || "",
       s.name || "",
       s.mobile || "",

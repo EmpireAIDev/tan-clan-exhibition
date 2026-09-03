@@ -112,6 +112,7 @@
     I18n.applyTo(document);
     // re-render dynamic bits that depend on language
     const activeId = history[history.length - 1];
+    if (activeId === "survey") SurveyScreen.render(document.getElementById("surveyForm"));
     if (activeId === "chart") renderChart();
     if (activeId === "preview") renderPreview();
     if (activeId === "migration-map") {
@@ -220,8 +221,7 @@
 
   function refreshCsvRowCount() {
     const n = CsvLog.rowCount();
-    document.getElementById("csvRowCountText").textContent =
-      n + " survey response" + (n === 1 ? "" : "s") + " saved on this computer.";
+    document.getElementById("csvRowCountText").textContent = I18n.t("csvRowCountText", { n: n });
   }
   document.getElementById("exportCsvBtn").addEventListener("click", () => {
     CsvLog.downloadCsv(SURVEY_CSV_COLUMNS);

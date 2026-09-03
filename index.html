@@ -33,28 +33,28 @@
 
     <!-- 0.5 DREAMS 2026 visitor survey (must complete before the family chart) -->
     <section class="screen" data-screen="survey">
-      <h1>Visitor Survey</h1>
-      <p class="subtitle">A few quick questions before we build your family tree.</p>
+      <h1 data-i18n="surveyTitle">Visitor Survey</h1>
+      <p class="subtitle" data-i18n="surveySub">A few quick questions before we build your family tree.</p>
       <div id="surveyForm" class="survey-form"></div>
       <div class="nav-buttons">
         <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="survey">Continue</button>
+        <button class="btn btn-primary" data-next="survey" data-i18n="continueBtn">Continue</button>
       </div>
     </section>
 
     <!-- 0.6 Survey thank-you interstitial -->
     <section class="screen" data-screen="survey-thanks">
       <div class="survey-thanks">
-        <h1>THANK YOU</h1>
-        <p class="survey-thanks-lede"><em>Your journey doesn't end here.</em></p>
-        <p>Together, we discover our roots, strengthen our connections and shape what comes next.</p>
-        <p class="survey-thanks-chapter">CHAPTER THREE · …</p>
-        <p><em>Perhaps you are part of the next chapter.</em></p>
-        <p class="survey-thanks-brand">OOY CIRCLE</p>
-        <p class="survey-thanks-tagline"><em>Our Roots · Our Nation · Your Journey</em></p>
+        <h1 data-i18n="surveyThanksTitle">THANK YOU</h1>
+        <p class="survey-thanks-lede"><em data-i18n="surveyThanksLede">Your journey doesn't end here.</em></p>
+        <p data-i18n="surveyThanksBody">Together, we discover our roots, strengthen our connections and shape what comes next.</p>
+        <p class="survey-thanks-chapter" data-i18n="surveyThanksChapter">CHAPTER THREE · …</p>
+        <p><em data-i18n="surveyThanksNextChapter">Perhaps you are part of the next chapter.</em></p>
+        <p class="survey-thanks-brand" data-i18n="surveyThanksBrand">OOY CIRCLE</p>
+        <p class="survey-thanks-tagline"><em data-i18n="surveyThanksTagline">Our Roots · Our Nation · Your Journey</em></p>
       </div>
       <div class="nav-buttons">
-        <button class="btn btn-primary" id="surveyThanksContinueBtn">Continue to your family tree</button>
+        <button class="btn btn-primary" id="surveyThanksContinueBtn" data-i18n="surveyThanksContinueBtn">Continue to your family tree</button>
       </div>
     </section>
 
@@ -127,10 +127,10 @@
       <p style="font-weight:600; margin-bottom:8px;" data-i18n="paperSize">Paper size</p>
       <div id="paperSizeOptions"></div>
 
-      <p style="font-weight:600; margin:20px 0 8px;">DREAMS 2026 survey data</p>
+      <p style="font-weight:600; margin:20px 0 8px;" data-i18n="settingsCsvTitle">DREAMS 2026 survey data</p>
       <p class="subtitle" id="csvRowCountText" style="margin-bottom:8px; font-size:14px;"></p>
-      <button class="btn btn-ghost" id="exportCsvBtn">Export CSV</button>
-      <p class="survey-hint" style="margin-top:8px;">
+      <button class="btn btn-ghost" id="exportCsvBtn" data-i18n="exportCsvBtn">Export CSV</button>
+      <p class="survey-hint" style="margin-top:8px;" data-i18n="csvHint">
         Downloads every survey answer collected on this computer so far. Never uploaded anywhere — save it into Documents\Academic yourself.
       </p>
 
