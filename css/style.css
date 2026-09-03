@@ -1,13 +1,49 @@
+/* Brand fonts, vendored locally (see fonts/) rather than loaded from a CDN —
+   this kiosk is designed to run fully offline over file://, so a font that
+   silently fails to load at a real (possibly internet-less) exhibition
+   venue is not an acceptable trade for one less file to manage. Montserrat
+   ships as a single variable-weight file covering 400–800; Dancing Script
+   stands in for the brief's "Playlist Script / Similar" (a commercial font
+   not available to vendor) and is used sparingly, as a decorative accent
+   on a handful of brand/emotional moments — never for body text or
+   functional UI (its Latin-only glyph coverage would silently drop to the
+   fallback stack for any Chinese text anyway). */
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("../fonts/montserrat-var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Dancing Script";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/dancing-script-bold.woff2") format("woff2");
+}
+
 :root {
-  --orange: #f5820d;
-  --orange-light: #ffe3bf;
-  --ink: #2b2b33;
-  --paper: #fffdf8;
+  /* ---- brand palette ---- */
+  --ink: #0D2B45;       /* deep navy — headings, primary text */
+  --primary: #E25A2C;   /* orange-red — main CTAs, brand accent */
+  --primary-light: #F9DACB; /* light tint of primary — selected states, badges */
+  --teal: #1AA6A6;
+  --gold: #D29A1A;
+  --purple: #7C4D99;
+  --green: #39A96B;
+  --red: #C62828;       /* errors / danger */
+
+  --paper: #F5F7FA;
   --card: #ffffff;
-  --muted: #6b7280;
-  --border: #e6e1d6;
+  --muted: #55708A;
+  --border: #D8E1E8;
   --radius: 20px;
   --max-w: 900px;
+
+  /* legacy alias kept for any stray reference — same color as --orange used to be */
+  --orange: var(--primary);
+  --orange-light: var(--primary-light);
 }
 
 * { box-sizing: border-box; }
@@ -15,7 +51,8 @@
 html, body {
   margin: 0;
   height: 100%;
-  font-family: "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-family: "Montserrat", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-weight: 400;
   background: var(--paper);
   color: var(--ink);
   overflow: hidden; /* kiosk: no scroll bounce */
@@ -25,6 +62,13 @@ button {
   font-family: inherit;
   cursor: pointer;
 }
+
+h1, h2, h3 {
+  font-family: "Montserrat", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+h1 { font-weight: 800; } /* headings: Montserrat ExtraBold */
+h2 { font-weight: 700; } /* headings: Montserrat Bold */
+h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 
 .app {
   position: relative;
@@ -65,7 +109,7 @@ button {
   color: var(--muted);
 }
 .lang-toggle button.active {
-  background: var(--orange);
+  background: var(--primary);
   color: #fff;
   font-weight: 600;
 }
@@ -153,7 +197,7 @@ button {
 .field input[type="tel"]:focus,
 .field input[type="email"]:focus,
 .field textarea:focus {
-  border-color: var(--orange);
+  border-color: var(--primary);
 }
 
 .type-grid {
@@ -171,8 +215,8 @@ button {
   font-size: 16px;
 }
 .type-grid button.selected {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
   font-weight: 700;
 }
 
@@ -191,8 +235,8 @@ button {
   font-size: 14px;
 }
 .place-grid button.selected {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
   font-weight: 700;
 }
 
@@ -211,8 +255,8 @@ button {
   background: #fff;
 }
 .big-choice button.selected {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
 }
 
 .count-grid {
@@ -233,8 +277,8 @@ button {
   font-weight: 700;
 }
 .count-grid button.selected {
-  border-color: var(--orange);
-  background: var(--orange);
+  border-color: var(--primary);
+  background: var(--primary);
   color: #fff;
 }
 
@@ -252,8 +296,8 @@ button {
   background: #fff;
 }
 .lang-pick button.selected {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
   font-weight: 700;
 }
 
@@ -271,11 +315,11 @@ button {
   font-weight: 600;
 }
 .btn-primary {
-  background: var(--orange);
+  background: var(--primary);
   color: #fff;
 }
 .btn-primary:disabled {
-  background: #f0c491;
+  background: #F0B49E;
   cursor: not-allowed;
 }
 .btn-ghost {
@@ -288,7 +332,7 @@ button {
   font-size: 24px;
   border-radius: 999px;
   border: none;
-  background: var(--orange);
+  background: var(--primary);
   color: #fff;
   font-weight: 700;
 }
@@ -329,7 +373,7 @@ button {
   width: 64px;
   height: 64px;
   font-size: 26px;
-  box-shadow: 0 0 0 4px var(--orange-light), 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 0 0 4px var(--primary-light), 0 2px 6px rgba(0,0,0,0.15);
 }
 .avatar.avatar-has-photo {
   overflow: hidden;
@@ -346,7 +390,7 @@ button {
   font-size: 14px;
   line-height: 1.2;
 }
-.person-self .person-name { color: var(--orange); }
+.person-self .person-name { color: var(--primary); }
 .person-relation {
   font-size: 11px;
   color: var(--muted);
@@ -358,7 +402,7 @@ button {
 }
 
 .connector-line {
-  stroke: #c9c2b3;
+  stroke: var(--border);
   stroke-width: 2;
 }
 
@@ -371,14 +415,14 @@ button {
   margin: 0 auto;
 }
 .migration-line {
-  stroke: #f5820d;
+  stroke: var(--primary);
   stroke-width: 3;
   opacity: 0;
   transition: opacity 0.5s ease;
 }
 .migration-line.visible { opacity: 1; }
 .migration-dot {
-  fill: #f5820d;
+  fill: var(--primary);
   stroke: #fff;
   stroke-width: 2;
   opacity: 0;
@@ -387,20 +431,20 @@ button {
   transform: scale(0.3);
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
-.migration-dot-final { fill: #e0463f; }
+.migration-dot-final { fill: var(--red); }
 .migration-pin.visible .migration-dot { opacity: 1; transform: scale(1); }
 .migration-label {
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
-  fill: #2b2b33;
+  fill: var(--ink);
   opacity: 0;
   transition: opacity 0.4s ease;
 }
 .migration-tag {
   font-size: 9px;
   text-anchor: middle;
-  fill: #6b7280;
+  fill: var(--muted);
   opacity: 0;
   transition: opacity 0.4s ease;
 }
@@ -470,7 +514,7 @@ button {
 #shareQr svg { width: 100%; height: 100%; }
 .share-link {
   font-size: 13px;
-  color: var(--orange);
+  color: var(--primary);
   word-break: break-all;
   font-weight: 600;
   margin: 8px 0 0;
@@ -513,8 +557,8 @@ button {
   background: #fff;
 }
 .paper-option.selected {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
   font-weight: 700;
 }
 
@@ -558,8 +602,8 @@ button {
   border-radius: 8px;
   font-size: 14px;
 }
-.photo-popover button:hover { background: var(--orange-light); }
-.photo-popover button.danger { color: #e0463f; }
+.photo-popover button:hover { background: var(--primary-light); }
+.photo-popover button.danger { color: var(--red); }
 
 /* --- family chart question panel (right side) --- */
 .question-section { margin-bottom: 28px; }
@@ -567,7 +611,7 @@ button {
 .question-section-title {
   font-size: 15px;
   font-weight: 700;
-  color: var(--orange);
+  color: var(--primary);
   margin: 0 0 14px;
 }
 .question-person {
@@ -620,7 +664,7 @@ button {
   font-family: inherit;
   background: #fff;
 }
-.question-input:focus { border-color: var(--orange); outline: none; }
+.question-input:focus { border-color: var(--primary); outline: none; }
 .question-hint {
   font-size: 12px;
   color: var(--muted);
@@ -639,8 +683,8 @@ button {
 }
 .origin-chip.set {
   border-style: solid;
-  border-color: var(--orange);
-  color: var(--orange);
+  border-color: var(--primary);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -656,7 +700,7 @@ button {
   font-weight: 600;
   text-align: center;
 }
-.add-sibling-card:hover { border-color: var(--orange); color: var(--orange); }
+.add-sibling-card:hover { border-color: var(--primary); color: var(--primary); }
 
 .remove-sibling-btn {
   position: absolute;
@@ -665,7 +709,7 @@ button {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #e0463f;
+  background: var(--red);
   color: #fff;
   border: 2px solid #fff;
   font-size: 14px;
@@ -720,7 +764,7 @@ button {
 .checkbox-row input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: var(--orange);
+  accent-color: var(--primary);
   flex-shrink: 0;
 }
 .other-input {
@@ -733,7 +777,7 @@ button {
   border-radius: 12px;
   font-family: inherit;
 }
-.other-input:focus { border-color: var(--orange); outline: none; }
+.other-input:focus { border-color: var(--primary); outline: none; }
 
 .toggle-card {
   display: flex;
@@ -750,14 +794,14 @@ button {
   width: 22px;
   height: 22px;
   margin-top: 2px;
-  accent-color: var(--orange);
+  accent-color: var(--primary);
   flex-shrink: 0;
 }
 .toggle-card-title { font-weight: 700; margin-bottom: 4px; }
 .toggle-card-desc { font-size: 14px; color: var(--muted); }
 .toggle-card-consent {
-  border-color: var(--orange);
-  background: var(--orange-light);
+  border-color: var(--primary);
+  background: var(--primary-light);
 }
 .toggle-card-consent .toggle-card-desc { color: var(--ink); font-weight: 600; }
 
@@ -778,7 +822,7 @@ button {
 .pdpa-notice p { margin: 0 0 10px; }
 .pdpa-notice p:last-child { margin-bottom: 0; }
 
-.shake-error { animation: shakeError 0.4s ease; outline: 2px solid #e0463f !important; }
+.shake-error { animation: shakeError 0.4s ease; outline: 2px solid var(--red) !important; }
 @keyframes shakeError {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-6px); }
@@ -793,14 +837,16 @@ button {
 .survey-thanks p { margin: 0 0 12px; color: var(--ink); }
 .survey-thanks-lede { font-size: 20px; }
 .survey-thanks-chapter {
-  color: var(--orange);
+  color: var(--primary);
   font-weight: 700;
   letter-spacing: 1px;
   margin-top: 20px !important;
 }
 .survey-thanks-brand {
-  font-size: 22px;
+  font-family: "Dancing Script", "Montserrat", cursive; /* brand accent, see print.css's .card-header-script */
+  font-size: 34px;
   font-weight: 700;
+  color: var(--gold);
   margin-top: 20px !important;
 }
 .survey-thanks-tagline { color: var(--muted); }

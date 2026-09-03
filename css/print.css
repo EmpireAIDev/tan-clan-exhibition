@@ -1,8 +1,8 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: #d8d3c6;
-  font-family: "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: #DCE3E8;
+  font-family: "Montserrat", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   overflow: hidden;
 }
 
@@ -19,7 +19,7 @@ html, body {
 }
 
 .card {
-  background: #fffdf8;
+  background: var(--card, #ffffff);
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
@@ -36,9 +36,19 @@ html, body {
   text-align: center;
   font-size: 3.2mm;
   letter-spacing: 0.5px;
-  color: #b98a3d;
+  color: var(--gold, #D29A1A);
   font-weight: 700;
   text-transform: uppercase;
+}
+/* the brief's "Playlist Script" accent — reserved for this one decorative
+   keepsake moment (the postcard's brand name), not functional UI text;
+   deliberately not uppercased, script faces read poorly in all-caps */
+.card-header-script {
+  top: 3mm;
+  font-family: "Dancing Script", "Montserrat", cursive;
+  font-size: 6mm;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 #treeMount {
@@ -64,17 +74,17 @@ html, body {
 .printed-screen {
   position: fixed;
   inset: 0;
-  background: var(--paper, #fffdf8);
+  background: var(--paper, #F5F7FA);
   display: none;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   text-align: center;
-  color: #2b2b33;
+  color: var(--ink, #0D2B45);
 }
 .printed-screen.open { display: flex; }
-.printed-screen h1 { font-size: 40px; margin-bottom: 8px; }
-.printed-screen p { color: #6b7280; font-size: 20px; }
+.printed-screen h1 { font-size: 40px; margin-bottom: 8px; font-weight: 800; }
+.printed-screen p { color: var(--muted, #55708A); font-size: 20px; }
 
 @media print {
   .no-print { display: none !important; }

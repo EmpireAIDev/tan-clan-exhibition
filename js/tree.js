@@ -2,14 +2,14 @@
 // Shared by the on-screen preview (index.html) and the printable postcard (print.html).
 
 const ROLE_COLORS = {
-  self: "#f5820d",
-  father: "#3b7dd8",
-  mother: "#e0568c",
-  grandfather: "#2f9e8f",
-  grandmother: "#8e6fce",
-  greatgrandfather: "#a9762f",
-  greatgrandmother: "#c9506b",
-  sibling: "#6b7a8f",
+  self: "#E25A2C",
+  father: "#1AA6A6",
+  mother: "#7C4D99",
+  grandfather: "#D29A1A",
+  grandmother: "#39A96B",
+  greatgrandfather: "#0D2B45",
+  greatgrandmother: "#C62828",
+  sibling: "#4E7091",
 };
 
 function initial(name) {

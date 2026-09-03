@@ -9,11 +9,11 @@ function baseMapSVG() {
   // mainland has its characteristic bays/peninsulas, Taiwan is an elongated
   // island, Indochina tapers into the Malay peninsula, and Sumatra/Java sit
   // apart as their own islands.
-  const land = "#dfe6c4";
-  const landAlt = "#e3ead0";
-  const stroke = "#c7d09f";
+  const land = "#DCEEE2";
+  const landAlt = "#E5F3E9";
+  const stroke = "#BFE0CB";
   return `
-  <rect x="0" y="0" width="500" height="620" fill="#cfe8f0"></rect>
+  <rect x="0" y="0" width="500" height="620" fill="#D6EFEF"></rect>
 
   <path d="M140,90
     Q200,20 280,25
@@ -68,7 +68,7 @@ function baseMapSVG() {
     Q304,560 290,558
     Q278,554 279,542
     Q281,533 290,532 Z"
-    fill="#f5820d" stroke="#c7860a" stroke-width="2"></path>
+    fill="#E25A2C" stroke="#B8431A" stroke-width="2"></path>
 
   <path d="M165,510
     Q200,495 225,510

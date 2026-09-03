@@ -56,7 +56,7 @@ const PhotoCapture = {
         <div class="webcam-video-wrap">
           <video id="webcamVideo" autoplay playsinline muted></video>
         </div>
-        <p class="subtitle" id="webcamError" style="display:none; color:#e0463f;"></p>
+        <p class="subtitle" id="webcamError" style="display:none; color:#C62828;"></p>
         <div class="nav-buttons">
           <button class="btn btn-ghost" id="webcamCancelBtn" data-i18n="close">Close</button>
           <button class="btn btn-primary" id="webcamCaptureBtn" data-i18n="capturePhoto">Capture</button>

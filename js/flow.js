@@ -172,7 +172,7 @@
     const input = document.querySelector('#chartQuestions [data-role="' + role + '"] .question-input[data-field="name"]');
     if (!input) return;
     input.scrollIntoView({ block: "center", behavior: "smooth" });
-    input.style.borderColor = "#e0463f";
+    input.style.borderColor = "#C62828";
     input.focus();
     setTimeout(() => (input.style.borderColor = ""), 700);
   }
