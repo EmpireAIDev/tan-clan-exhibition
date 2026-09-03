@@ -83,7 +83,12 @@ button {
 .screens {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* NOT center: centering a flex item taller than its
+    container clips the overflow above the container's top edge, and that
+    portion can never be scrolled back into view (scrollTop can't go
+    negative) — this is what was hiding the top of tall screens like the
+    survey. flex-start always keeps the natural top in view and only ever
+    overflows downward, where overflow-y can actually reach it. */
   justify-content: center;
   padding: 40px 24px;
   overflow-y: auto; /* safety net: content should fit, but never trap it off-screen */
