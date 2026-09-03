@@ -145,7 +145,18 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   text-align: center;
   animation: fadeIn 0.25s ease;
 }
-.screen.active { display: block; }
+.screen.active {
+  display: block;
+  /* Vertically centers short screens (welcome, chart, etc.) via auto
+     margins on the flex item itself, rather than align-items: center on
+     .screens above. The difference matters when content is taller than
+     the viewport: auto margins collapse to 0 in that case (top-aligned,
+     fully reachable by scrolling), where align-items: center would have
+     clipped the overflow above the container's edge with no way back —
+     see the note on .screens. */
+  margin-top: auto;
+  margin-bottom: auto;
+}
 .screen[data-screen="preview"] { max-width: 1140px; }
 .screen[data-screen="chart"] { max-width: 1100px; }
 
