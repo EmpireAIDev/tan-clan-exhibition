@@ -282,25 +282,6 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   color: #fff;
 }
 
-.lang-pick {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin: 24px 0 40px;
-}
-.lang-pick button {
-  padding: 18px 32px;
-  font-size: 20px;
-  border-radius: 16px;
-  border: 2px solid var(--border);
-  background: #fff;
-}
-.lang-pick button.selected {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  font-weight: 700;
-}
-
 .nav-buttons {
   display: flex;
   justify-content: center;
@@ -850,6 +831,27 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   margin-top: 20px !important;
 }
 .survey-thanks-tagline { color: var(--muted); }
+
+/* --- opening screen --- */
+.welcome-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center; /* inherited from .screen anyway, kept explicit */
+}
+.welcome-chapters { margin-top: 8px; }
+.chapter-title {
+  font-family: "Montserrat", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+.chapter-sub {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 4px 0 0;
+}
+.welcome-screen .btn-start { margin-top: 36px; }
 
 /* --- idle overlay --- */
 .idle-overlay {

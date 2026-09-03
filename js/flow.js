@@ -106,9 +106,6 @@
     document.querySelectorAll("#langToggle button").forEach((b) => {
       b.classList.toggle("active", b.dataset.lang === lang);
     });
-    document.querySelectorAll("#langPick button").forEach((b) => {
-      b.classList.toggle("selected", b.dataset.lang === lang);
-    });
     I18n.applyTo(document);
     // re-render dynamic bits that depend on language
     const activeId = history[history.length - 1];
@@ -121,11 +118,6 @@
   }
 
   document.getElementById("langToggle").addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    applyLang(btn.dataset.lang);
-  });
-  document.getElementById("langPick").addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
     applyLang(btn.dataset.lang);

@@ -19,16 +19,23 @@
 
   <div class="screens">
 
-    <!-- 0. Welcome / language -->
-    <section class="screen active" data-screen="welcome">
-      <h1 data-i18n="welcomeTitle">Welcome!</h1>
-      <p class="subtitle" data-i18n="welcomeSub">Let's build your family tree together.</p>
-      <p class="subtitle" data-i18n="pickLanguage" style="margin-bottom:8px;">Choose your language</p>
-      <div class="lang-pick" id="langPick">
-        <button data-lang="en">English</button>
-        <button data-lang="zh">简体中文</button>
+    <!-- 0. Opening screen (language switch lives only in the top-left toggle) -->
+    <section class="screen active welcome-screen" data-screen="welcome">
+      <p class="survey-thanks-brand" data-i18n="surveyThanksBrand">OOY CIRCLE</p>
+      <p class="survey-thanks-tagline"><em data-i18n="surveyThanksTagline">Our Roots · Our Nation · Your Journey</em></p>
+
+      <div class="welcome-chapters">
+        <p class="survey-thanks-chapter" data-i18n="welcomeChapter1Label">CHAPTER ONE · 2023</p>
+        <p class="chapter-title" data-i18n="welcomeChapter1Title">ENCOUNTER</p>
+
+        <p class="survey-thanks-chapter" data-i18n="welcomeChapter2Label">CHAPTER TWO · 2026</p>
+        <p class="chapter-title" data-i18n="welcomeChapter2Title">DREAMS</p>
+
+        <p class="survey-thanks-chapter" data-i18n="surveyThanksChapter">CHAPTER THREE · …</p>
+        <p class="chapter-sub"><em data-i18n="surveyThanksNextChapter">Perhaps you are part of the next chapter.</em></p>
       </div>
-      <button class="btn-start" id="startBtn" data-i18n="start">Start</button>
+
+      <button class="btn-start" id="startBtn" data-i18n="beginJourneyBtn">BEGIN MY JOURNEY</button>
     </section>
 
     <!-- 0.5 DREAMS 2026 visitor survey (must complete before the family chart) -->
