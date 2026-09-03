@@ -41,7 +41,11 @@
       return Promise.resolve({ docId: visitorData.shareDocId, url: visitorData.shareUrl });
     }
     const ref = db.collection("submissions").doc();
-    const payload = Object.assign({}, visitorData, {
+    // The DREAMS 2026 survey (visitorData.survey) is local-only by design —
+    // see js/csv-log.js — and must never reach Firestore, so it's stripped
+    // out here before anything gets written.
+    const { survey, ...syncableData } = visitorData;
+    const payload = Object.assign({}, syncableData, {
       submitted: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),

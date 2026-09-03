@@ -31,7 +31,9 @@
 
   function syncScreenUI(id) {
     const d = State.data;
-    if (id === "chart") {
+    if (id === "survey") {
+      SurveyScreen.render(document.getElementById("surveyForm"));
+    } else if (id === "chart") {
       renderChart();
     } else if (id === "migration-map") {
       mapControl = renderMigrationMap(document.getElementById("migrationMap"), d, { animated: true });
@@ -133,7 +135,7 @@
     State.reset();
     applyLang(I18n.lang);
     history = ["welcome"];
-    goto("chart");
+    goto("survey");
   });
 
   // ---- back buttons ----
@@ -147,7 +149,12 @@
   function handleNext(from) {
     const d = State.data;
 
-    if (from === "chart") {
+    if (from === "survey") {
+      if (!SurveyScreen.validate()) return;
+      CsvLog.logSubmission(SurveyScreen.buildCsvRow());
+      State.save();
+      goto("survey-thanks");
+    } else if (from === "chart") {
       if (!d.self.name.trim()) return shakeChartField("self");
       if (!d.father.name.trim()) return shakeChartField("father");
       if (!d.mother.name.trim()) return shakeChartField("mother");
@@ -173,6 +180,15 @@
     renderFamilyTree(document.getElementById("previewTree"), State.data);
   }
 
+  // The survey is a one-time step: once its "Thank you" screen is reached,
+  // continuing resets history so the chart's Back button returns straight
+  // to welcome (skipping survey/survey-thanks) rather than letting the
+  // visitor re-submit the survey a second time.
+  document.getElementById("surveyThanksContinueBtn").addEventListener("click", () => {
+    history = ["welcome"];
+    goto("chart");
+  });
+
   document.getElementById("replayMapBtn").addEventListener("click", () => {
     mapControl.replay();
   });
@@ -192,6 +208,7 @@
   const settingsModal = document.getElementById("settingsModal");
   document.getElementById("settingsBtn").addEventListener("click", () => {
     renderPaperOptions();
+    refreshCsvRowCount();
     settingsModal.classList.add("open");
   });
   document.getElementById("closeSettingsBtn").addEventListener("click", () => {
@@ -199,6 +216,15 @@
   });
   settingsModal.addEventListener("click", (e) => {
     if (e.target === settingsModal) settingsModal.classList.remove("open");
+  });
+
+  function refreshCsvRowCount() {
+    const n = CsvLog.rowCount();
+    document.getElementById("csvRowCountText").textContent =
+      n + " survey response" + (n === 1 ? "" : "s") + " saved on this computer.";
+  }
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    CsvLog.downloadCsv(SURVEY_CSV_COLUMNS);
   });
 
   function renderPaperOptions() {

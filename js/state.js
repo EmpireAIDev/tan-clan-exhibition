@@ -12,6 +12,32 @@ function blankPerson() {
   return { name: "", job: "", photo: null };
 }
 
+// DREAMS 2026 visitor survey — completed before the family chart. Kept
+// entirely local (see js/csv-log.js): never sent to Firestore (js/sync.js
+// strips this key out before writing), only exported to CSV by staff.
+function blankSurvey() {
+  return {
+    rating: null,
+    interests: [],
+    interestsOther: "",
+    rootsInterest: null,
+    futurePrograms: [],
+    futureProgramsOther: "",
+    nextChapterSuggestion: "",
+    name: "",
+    ageGroup: null,
+    gender: null,
+    hobbies: "",
+    mobile: "",
+    email: "",
+    joinCircle: false,
+    keepInformed: false,
+    contribute: false,
+    contributeDetails: "",
+    pdpaConsent: false,
+  };
+}
+
 function blankState() {
   return {
     lang: "en",
@@ -36,6 +62,7 @@ function blankState() {
     // kiosk; only collected/edited later in edit/ (see js/dialogue-questions.js).
     // Keyed by question id, e.g. { grandpaFirstJob: "..." }.
     dialogueAnswers: {},
+    survey: blankSurvey(),
   };
 }
 

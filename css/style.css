@@ -131,15 +131,23 @@ button {
   color: var(--muted);
   font-size: 14px;
 }
-.field input[type="text"] {
+.field input[type="text"],
+.field input[type="tel"],
+.field input[type="email"],
+.field textarea {
   width: 100%;
   padding: 14px 16px;
   font-size: 20px;
   border: 2px solid var(--border);
   border-radius: 12px;
   outline: none;
+  font-family: inherit;
 }
-.field input[type="text"]:focus {
+.field textarea { resize: vertical; }
+.field input[type="text"]:focus,
+.field input[type="tel"]:focus,
+.field input[type="email"]:focus,
+.field textarea:focus {
   border-color: var(--orange);
 }
 
@@ -661,6 +669,136 @@ button {
   align-items: center;
   justify-content: center;
 }
+
+/* --- DREAMS 2026 survey --- */
+.survey-form {
+  text-align: left;
+  max-width: 620px;
+  margin: 0 auto;
+}
+.survey-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 32px 0 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.survey-section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.survey-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.rating-captions {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 340px;
+  margin-top: 6px;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--orange);
+  flex-shrink: 0;
+}
+.other-input {
+  display: none;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 14px;
+  font-size: 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-family: inherit;
+}
+.other-input:focus { border-color: var(--orange); outline: none; }
+
+.toggle-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.toggle-card input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--orange);
+  flex-shrink: 0;
+}
+.toggle-card-title { font-weight: 700; margin-bottom: 4px; }
+.toggle-card-desc { font-size: 14px; color: var(--muted); }
+.toggle-card-consent {
+  border-color: var(--orange);
+  background: var(--orange-light);
+}
+.toggle-card-consent .toggle-card-desc { color: var(--ink); font-weight: 600; }
+
+.pdpa-notice {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.pdpa-notice h3 {
+  color: var(--ink);
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+.pdpa-notice p { margin: 0 0 10px; }
+.pdpa-notice p:last-child { margin-bottom: 0; }
+
+.shake-error { animation: shakeError 0.4s ease; outline: 2px solid #e0463f !important; }
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.survey-thanks {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.survey-thanks h1 { margin-bottom: 16px; }
+.survey-thanks p { margin: 0 0 12px; color: var(--ink); }
+.survey-thanks-lede { font-size: 20px; }
+.survey-thanks-chapter {
+  color: var(--orange);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-top: 20px !important;
+}
+.survey-thanks-brand {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 20px !important;
+}
+.survey-thanks-tagline { color: var(--muted); }
 
 /* --- idle overlay --- */
 .idle-overlay {
