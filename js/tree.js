@@ -10,7 +10,23 @@ const ROLE_COLORS = {
   greatgrandfather: "#0D2B45",
   greatgrandmother: "#C62828",
   sibling: "#4E7091",
+  child: "#1AA6A6",
+  grandchild: "#7C4D99",
+  greatgrandchild: "#D29A1A",
+  descendant: "#39A96B",
 };
+
+// Role (for avatar color + relation label) of a descendant node by
+// generation, where self is Generation 1. Generation 5+ (beyond what
+// printing includes) all share one generic "descendant" role — the
+// Gen-N badge on the card carries the exact depth instead.
+function descendantRole(generation) {
+  if (generation <= 1) return "self";
+  if (generation === 2) return "child";
+  if (generation === 3) return "grandchild";
+  if (generation === 4) return "greatgrandchild";
+  return "descendant";
+}
 
 function initial(name) {
   const n = (name || "").trim();
@@ -236,11 +252,137 @@ function drawConnectors(container, rows) {
   container.insertBefore(svg, container.firstChild);
 }
 
-function renderFamilyTree(container, data) {
+// ---- descendants of self (self = Family Root in Singapore, Generation 1) ----
+// A separate, self-contained recursive layout from the ancestor rows above:
+// unlike the fixed-shape ancestor side (always exactly one couple per row,
+// so a single "connect this row to the next row" pass works), a descendant
+// tree branches — different children can have different numbers of their
+// own children — so each node draws its own connector to just its direct
+// children, recursively, rather than one global row-to-row pass.
+// maxGeneration (optional) caps how deep to render — used by printing to
+// show only the first 4 generations without touching the underlying data;
+// omit it (or pass Infinity) to render the whole tree, e.g. on-screen.
+function buildDescendantNode(person, generation, maxGeneration) {
+  const node = document.createElement("div");
+  node.className = "descendant-node";
+  node.dataset.generation = generation;
+
+  const role = descendantRole(generation);
+  const card = makePersonCard(role, person, generation === 1 ? "person-self" : "person-descendant");
+  const badge = document.createElement("div");
+  badge.className = "gen-badge";
+  badge.textContent = I18n.t("genBadge", { n: generation });
+  card.appendChild(badge);
+  node.appendChild(card);
+
+  const children = person.children || [];
+  if (children.length && generation < maxGeneration) {
+    const childrenWrap = document.createElement("div");
+    childrenWrap.className = "descendant-children";
+    children.forEach((child) => {
+      childrenWrap.appendChild(buildDescendantNode(child, generation + 1, maxGeneration));
+    });
+    node.appendChild(childrenWrap);
+  }
+
+  return node;
+}
+
+// Draws local SVG connectors from each node with children to those direct
+// children only (scoped to that node's own wrapper), then recurses —
+// see buildDescendantNode's comment for why this can't reuse drawConnectors.
+function drawDescendantConnectors(node) {
+  const card = node.querySelector(":scope > .person");
+  const childrenWrap = node.querySelector(":scope > .descendant-children");
+  if (!card || !childrenWrap) return;
+
+  const childNodes = Array.from(childrenWrap.children);
+  const childCards = childNodes.map((n) => n.querySelector(":scope > .person")).filter(Boolean);
+  if (childCards.length) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "connectors");
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.overflow = "visible";
+    svg.style.pointerEvents = "none";
+
+    node.style.position = "relative";
+    const nodeRect = node.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const fromX = cardRect.left + cardRect.width / 2 - nodeRect.left;
+    const fromY = cardRect.bottom - nodeRect.top;
+    const wrapRect = childrenWrap.getBoundingClientRect();
+    const toY = wrapRect.top - nodeRect.top;
+    const midY = (fromY + toY) / 2;
+
+    const trunk = document.createElementNS(svgNS, "line");
+    trunk.setAttribute("x1", fromX);
+    trunk.setAttribute("y1", fromY);
+    trunk.setAttribute("x2", fromX);
+    trunk.setAttribute("y2", midY);
+    trunk.setAttribute("class", "connector-line");
+    svg.appendChild(trunk);
+
+    const centers = childCards.map((c) => {
+      const r = c.getBoundingClientRect();
+      return r.left + r.width / 2 - nodeRect.left;
+    });
+    if (centers.length === 1) {
+      const drop = document.createElementNS(svgNS, "line");
+      drop.setAttribute("x1", fromX);
+      drop.setAttribute("y1", midY);
+      drop.setAttribute("x2", centers[0]);
+      drop.setAttribute("y2", toY);
+      drop.setAttribute("class", "connector-line");
+      svg.appendChild(drop);
+    } else {
+      const bar = document.createElementNS(svgNS, "line");
+      bar.setAttribute("x1", Math.min(...centers));
+      bar.setAttribute("y1", midY);
+      bar.setAttribute("x2", Math.max(...centers));
+      bar.setAttribute("y2", midY);
+      bar.setAttribute("class", "connector-line");
+      svg.appendChild(bar);
+      centers.forEach((cx) => {
+        const drop = document.createElementNS(svgNS, "line");
+        drop.setAttribute("x1", cx);
+        drop.setAttribute("y1", midY);
+        drop.setAttribute("x2", cx);
+        drop.setAttribute("y2", toY);
+        drop.setAttribute("class", "connector-line");
+        svg.appendChild(drop);
+      });
+    }
+    node.insertBefore(svg, node.firstChild);
+  }
+
+  childNodes.forEach(drawDescendantConnectors);
+}
+
+function renderFamilyTree(container, data, opts) {
+  opts = opts || {};
+  const maxGeneration = opts.maxGeneration || Infinity;
   container.innerHTML = "";
   const { el, rows } = buildFamilyTree(data);
+
+  // Self is Generation 1 (Family Root in Singapore); descendants render as
+  // their own recursive subtree directly below the self+siblings row,
+  // replacing self's plain person card with one that also carries its
+  // children (siblings themselves are a separate generation-1 concept and
+  // keep rendering as plain cards, unaffected).
+  const descendantRoot = buildDescendantNode(data.self, 1, maxGeneration);
+  const selfCard = el.querySelector('.gen-children [data-role="self"]');
+  if (selfCard) selfCard.replaceWith(descendantRoot);
+
   container.appendChild(el);
   // connectors need layout to exist first
-  requestAnimationFrame(() => drawConnectors(el, rows));
+  requestAnimationFrame(() => {
+    drawConnectors(el, rows);
+    drawDescendantConnectors(descendantRoot);
+  });
   return el;
 }

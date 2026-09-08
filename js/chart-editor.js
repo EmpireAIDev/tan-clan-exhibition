@@ -280,6 +280,44 @@ function makeQuestionPersonBlock(role, person, opts) {
   return block;
 }
 
+// ---- descendants of self (recursive: self can add children, each child can
+// add their own children, unlimited depth — see js/tree.js's descendantRole
+// for the generation-1-is-self numbering this mirrors). Renders directly
+// into `container`, indenting each nested generation so the hierarchy reads
+// clearly even in the flat right-panel list.
+function makeDescendantEditor(container, person, generation, callbacks) {
+  const children = person.children || (person.children = []);
+  children.forEach((child, i) => {
+    const wrap = document.createElement("div");
+    wrap.className = "descendant-edit-wrap";
+    wrap.appendChild(
+      makeQuestionPersonBlock(descendantRole(generation), child, {
+        nameLabelKey: "siblingName",
+        jobLabelKey: "siblingJobLabel",
+        onPersonChange: callbacks.onPersonChange,
+        onRemove: () => {
+          children.splice(i, 1);
+          callbacks.onStructuralChange();
+        },
+      })
+    );
+    const nested = document.createElement("div");
+    nested.className = "descendant-nested";
+    makeDescendantEditor(nested, child, generation + 1, callbacks);
+    wrap.appendChild(nested);
+    container.appendChild(wrap);
+  });
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-sibling-card";
+  addBtn.textContent = I18n.t("addChild");
+  addBtn.addEventListener("click", () => {
+    children.push({ name: "", job: "", photo: null, children: [] });
+    callbacks.onStructuralChange();
+  });
+  container.appendChild(addBtn);
+}
+
 function questionSectionHeading(text) {
   const h = document.createElement("h3");
   h.className = "question-section-title";
@@ -303,6 +341,13 @@ function renderQuestionPanel(container, data, callbacks) {
     })
   );
   container.appendChild(selfSection);
+
+  // -- self's descendants (self = Generation 1 / Family Root in Singapore) --
+  const childrenSection = document.createElement("div");
+  childrenSection.className = "question-section";
+  childrenSection.appendChild(questionSectionHeading(I18n.t("childrenSectionTitle")));
+  makeDescendantEditor(childrenSection, data.self, 1, callbacks);
+  container.appendChild(childrenSection);
 
   // -- siblings --
   const siblingsSection = document.createElement("div");

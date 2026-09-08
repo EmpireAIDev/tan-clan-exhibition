@@ -24,7 +24,11 @@
   card.style.padding = `${PADDING_MM + HEADER_RESERVE_MM}mm ${PADDING_MM}mm ${PADDING_MM}mm`;
 
   const treeMount = document.getElementById("treeMount");
-  renderFamilyTree(treeMount, data);
+  // Printing caps the descendant side at 4 generations (self = Gen 1, so
+  // through great-grandchildren) — the underlying data (and the on-screen
+  // tree) keep every generation the visitor added; only this render call
+  // is limited, via renderFamilyTree's maxGeneration option (js/tree.js).
+  renderFamilyTree(treeMount, data, { maxGeneration: 4 });
 
   // Small scannable QR in the corner, linking to the same take-home page as
   // the on-screen share step — only shown if a link was actually created

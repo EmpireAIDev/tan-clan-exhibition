@@ -392,6 +392,40 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   color: var(--muted);
   font-style: italic;
 }
+.gen-badge {
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+/* --- descendants of self (self = Generation 1) --- */
+.gen-children { align-items: flex-start; } /* let self's descendant subtree grow down without stretching siblings */
+.descendant-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.descendant-children {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 34px;
+  position: relative;
+}
+.generation-legend {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 220px;
+  text-align: left;
+  line-height: 1.4;
+}
 
 .connector-line {
   stroke: var(--border);
@@ -710,6 +744,14 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   align-items: center;
   justify-content: center;
 }
+
+.descendant-edit-wrap { margin-bottom: 4px; }
+.descendant-nested {
+  margin: 4px 0 12px 20px;
+  padding-left: 14px;
+  border-left: 2px dashed var(--border);
+}
+.descendant-nested .add-sibling-card { padding: 8px; font-size: 13px; }
 
 /* --- DREAMS 2026 survey --- */
 .survey-form {
