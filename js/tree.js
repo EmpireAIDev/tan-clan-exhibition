@@ -31,9 +31,9 @@ const ROLE_EMOJI = {
   youngerSister: "👧",
 };
 
+// Always the role emoji, regardless of whether a name has been typed —
+// only an actual photo replaces it (see makePersonCard).
 function avatarFallback(role, person) {
-  const n = (person.name || "").trim();
-  if (n) return n[0].toUpperCase();
   if (role === "child") return person.gender === "daughter" ? "👧" : "👦";
   return ROLE_EMOJI[role] || "🧑";
 }
