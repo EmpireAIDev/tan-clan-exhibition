@@ -745,14 +745,6 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   justify-content: center;
 }
 
-.descendant-edit-wrap { margin-bottom: 4px; }
-.descendant-nested {
-  margin: 4px 0 12px 20px;
-  padding-left: 14px;
-  border-left: 2px dashed var(--border);
-}
-.descendant-nested .add-sibling-card { padding: 8px; font-size: 13px; }
-
 /* --- DREAMS 2026 survey --- */
 .survey-form {
   text-align: left;

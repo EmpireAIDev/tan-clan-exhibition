@@ -195,7 +195,7 @@ function makeQuestionPersonBlock(role, person, opts) {
     } else {
       avatarBtn.classList.remove("avatar-has-photo");
       avatarBtn.style.background = ROLE_COLORS[role] || "#999";
-      avatarBtn.textContent = initial(person.name);
+      avatarBtn.textContent = avatarFallback(role, person);
     }
   }
   renderAvatarContent();
@@ -216,7 +216,7 @@ function makeQuestionPersonBlock(role, person, opts) {
   nameInput.value = person.name || "";
   nameInput.addEventListener("input", () => {
     person.name = nameInput.value;
-    if (!avatarBtn.classList.contains("avatar-has-photo")) avatarBtn.textContent = initial(person.name);
+    if (!avatarBtn.classList.contains("avatar-has-photo")) avatarBtn.textContent = avatarFallback(role, person);
     if (opts.onPersonChange) opts.onPersonChange();
   });
   nameInputRow.appendChild(nameInput);
@@ -244,6 +244,30 @@ function makeQuestionPersonBlock(role, person, opts) {
     });
     typeRow.appendChild(typeSelect);
     block.appendChild(typeRow);
+  }
+
+  if (opts.showGenderSelect) {
+    const genderRow = document.createElement("div");
+    genderRow.className = "question-row";
+    const genderLabel = document.createElement("label");
+    genderLabel.textContent = I18n.t("childGenderLabel");
+    genderRow.appendChild(genderLabel);
+    const genderSelect = document.createElement("select");
+    genderSelect.className = "question-input";
+    ["son", "daughter"].forEach((g) => {
+      const o = document.createElement("option");
+      o.value = g;
+      o.textContent = I18n.t(g);
+      if (person.gender === g) o.selected = true;
+      genderSelect.appendChild(o);
+    });
+    genderSelect.addEventListener("change", () => {
+      person.gender = genderSelect.value;
+      renderAvatarContent();
+      if (opts.onPersonChange) opts.onPersonChange();
+    });
+    genderRow.appendChild(genderSelect);
+    block.appendChild(genderRow);
   }
 
   const jobRow = document.createElement("div");
@@ -280,20 +304,17 @@ function makeQuestionPersonBlock(role, person, opts) {
   return block;
 }
 
-// ---- descendants of self (recursive: self can add children, each child can
-// add their own children, unlimited depth — see js/tree.js's descendantRole
-// for the generation-1-is-self numbering this mirrors). Renders directly
-// into `container`, indenting each nested generation so the hierarchy reads
-// clearly even in the flat right-panel list.
-function makeDescendantEditor(container, person, generation, callbacks) {
-  const children = person.children || (person.children = []);
+// ---- self's own children only — one level, no grandchildren (self is the
+// Family Root in Singapore's own generation; the tree doesn't go further
+// down than that). Renders a flat list directly into `container`.
+function makeDescendantEditor(container, selfPerson, callbacks) {
+  const children = selfPerson.children || (selfPerson.children = []);
   children.forEach((child, i) => {
-    const wrap = document.createElement("div");
-    wrap.className = "descendant-edit-wrap";
-    wrap.appendChild(
-      makeQuestionPersonBlock(descendantRole(generation), child, {
+    container.appendChild(
+      makeQuestionPersonBlock("child", child, {
         nameLabelKey: "siblingName",
         jobLabelKey: "siblingJobLabel",
+        showGenderSelect: true,
         onPersonChange: callbacks.onPersonChange,
         onRemove: () => {
           children.splice(i, 1);
@@ -301,18 +322,13 @@ function makeDescendantEditor(container, person, generation, callbacks) {
         },
       })
     );
-    const nested = document.createElement("div");
-    nested.className = "descendant-nested";
-    makeDescendantEditor(nested, child, generation + 1, callbacks);
-    wrap.appendChild(nested);
-    container.appendChild(wrap);
   });
 
   const addBtn = document.createElement("button");
   addBtn.className = "add-sibling-card";
   addBtn.textContent = I18n.t("addChild");
   addBtn.addEventListener("click", () => {
-    children.push({ name: "", job: "", photo: null, children: [] });
+    children.push({ name: "", job: "", photo: null, gender: "son" });
     callbacks.onStructuralChange();
   });
   container.appendChild(addBtn);
@@ -346,7 +362,7 @@ function renderQuestionPanel(container, data, callbacks) {
   const childrenSection = document.createElement("div");
   childrenSection.className = "question-section";
   childrenSection.appendChild(questionSectionHeading(I18n.t("childrenSectionTitle")));
-  makeDescendantEditor(childrenSection, data.self, 1, callbacks);
+  makeDescendantEditor(childrenSection, data.self, callbacks);
   container.appendChild(childrenSection);
 
   // -- siblings --

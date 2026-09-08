@@ -11,26 +11,66 @@ const ROLE_COLORS = {
   greatgrandmother: "#C62828",
   sibling: "#4E7091",
   child: "#1AA6A6",
-  grandchild: "#7C4D99",
-  greatgrandchild: "#D29A1A",
-  descendant: "#39A96B",
 };
 
-// Role (for avatar color + relation label) of a descendant node by
-// generation, where self is Generation 1. Generation 5+ (beyond what
-// printing includes) all share one generic "descendant" role — the
-// Gen-N badge on the card carries the exact depth instead.
-function descendantRole(generation) {
-  if (generation <= 1) return "self";
-  if (generation === 2) return "child";
-  if (generation === 3) return "grandchild";
-  if (generation === 4) return "greatgrandchild";
-  return "descendant";
+// Avatar placeholder emoji, used instead of a bare "?" whenever a person
+// has no name/photo yet. Grandparent tiers (including great-grandparents)
+// share the grandparent emoji; a child's own son/daughter emoji depends on
+// the gender picked in the chart (see js/chart-editor.js).
+const ROLE_EMOJI = {
+  father: "👨",
+  mother: "👩",
+  grandfather: "👴",
+  grandmother: "👵",
+  greatgrandfather: "👴",
+  greatgrandmother: "👵",
+  self: "🧑",
+  olderBrother: "👦",
+  youngerBrother: "👦",
+  olderSister: "👧",
+  youngerSister: "👧",
+};
+
+function avatarFallback(role, person) {
+  const n = (person.name || "").trim();
+  if (n) return n[0].toUpperCase();
+  if (role === "child") return person.gender === "daughter" ? "👧" : "👦";
+  return ROLE_EMOJI[role] || "🧑";
 }
 
-function initial(name) {
-  const n = (name || "").trim();
-  return n ? n[0].toUpperCase() : "?";
+// ---- Family Root in Singapore / dynamic generation numbering ----
+// Generation 1 is whichever tier the visitor marked as originating from
+// Singapore (oldest tier wins if more than one somehow is) — e.g. if
+// grandparents lived in Singapore, THEY are Generation 1, parents are
+// Generation 2, self is Generation 3. Ancestor tiers older than the root
+// (e.g. great-grandparents who lived elsewhere before the family arrived)
+// don't get a generation number at all. If no tier is marked Singapore,
+// self is the fallback root, matching the kiosk's baseline assumption
+// that the visitor themself is Singapore-based.
+const GENERATION_TIERS = ["greatGrandparents", "grandparents", "parents", "self", "children"];
+
+function generationRootTier(data) {
+  if (data.knowGreatGrandparents && data.origins && data.origins.greatGrandparents === "singapore") {
+    return "greatGrandparents";
+  }
+  if (data.knowGrandparents && data.origins && data.origins.grandparents === "singapore") {
+    return "grandparents";
+  }
+  if (data.origins && data.origins.parents === "singapore") return "parents";
+  return "self";
+}
+
+function generationNumber(tier, rootTier) {
+  return GENERATION_TIERS.indexOf(tier) - GENERATION_TIERS.indexOf(rootTier) + 1;
+}
+
+function addGenBadge(card, tier, rootTier) {
+  const n = generationNumber(tier, rootTier);
+  if (n < 1) return;
+  const badge = document.createElement("div");
+  badge.className = "gen-badge";
+  badge.textContent = I18n.t("genBadge", { n });
+  card.appendChild(badge);
 }
 
 function relationKey(role) {
@@ -52,7 +92,7 @@ function makePersonCard(role, person, extraClass) {
     avatar.appendChild(img);
   } else {
     avatar.style.background = ROLE_COLORS[role] || "#999";
-    avatar.textContent = initial(person.name);
+    avatar.textContent = avatarFallback(role, person);
   }
   card.appendChild(avatar);
 
@@ -100,6 +140,7 @@ function buildFamilyTree(data) {
   const el = document.createElement("div");
   el.className = "family-tree";
   const rows = [];
+  const rootTier = generationRootTier(data);
 
   if (data.knowGreatGrandparents) {
     const row = document.createElement("div");
@@ -110,6 +151,7 @@ function buildFamilyTree(data) {
         { role: "greatgrandmother", person: data.greatGrandmother },
       ])
     );
+    row.querySelectorAll(".person").forEach((card) => addGenBadge(card, "greatGrandparents", rootTier));
     el.appendChild(row);
     rows.push(row);
   }
@@ -123,6 +165,7 @@ function buildFamilyTree(data) {
         { role: "grandmother", person: data.grandmother },
       ])
     );
+    row.querySelectorAll(".person").forEach((card) => addGenBadge(card, "grandparents", rootTier));
     el.appendChild(row);
     rows.push(row);
   }
@@ -135,6 +178,7 @@ function buildFamilyTree(data) {
       { role: "mother", person: data.mother },
     ])
   );
+  parentsRow.querySelectorAll(".person").forEach((card) => addGenBadge(card, "parents", rootTier));
   el.appendChild(parentsRow);
   rows.push(parentsRow);
 
@@ -156,10 +200,11 @@ function buildFamilyTree(data) {
       childrenRow.appendChild(makePersonCard(siblingRole(s.type), s, "person-sibling"));
     }
   });
+  childrenRow.querySelectorAll(".person").forEach((card) => addGenBadge(card, "self", rootTier));
   el.appendChild(childrenRow);
   rows.push(childrenRow);
 
-  return { el, rows };
+  return { el, rows, rootTier };
 }
 
 // Draws simple vertical connector lines between consecutive generation rows,
@@ -252,35 +297,37 @@ function drawConnectors(container, rows) {
   container.insertBefore(svg, container.firstChild);
 }
 
-// ---- descendants of self (self = Family Root in Singapore, Generation 1) ----
-// A separate, self-contained recursive layout from the ancestor rows above:
-// unlike the fixed-shape ancestor side (always exactly one couple per row,
-// so a single "connect this row to the next row" pass works), a descendant
-// tree branches — different children can have different numbers of their
-// own children — so each node draws its own connector to just its direct
-// children, recursively, rather than one global row-to-row pass.
-// maxGeneration (optional) caps how deep to render — used by printing to
-// show only the first 4 generations without touching the underlying data;
-// omit it (or pass Infinity) to render the whole tree, e.g. on-screen.
-function buildDescendantNode(person, generation, maxGeneration) {
+// ---- self's children (one level only — no grandchildren) ----
+// A self-contained addition below the self+siblings row: self's own
+// children render as a flat row directly under self, connected with a
+// small local SVG (scoped to this wrapper) since the existing row-to-row
+// drawConnectors would incorrectly also draw a line from every sibling.
+// maxGeneration (optional) hides this row entirely once it would exceed
+// the cap — used by printing; on-screen callers omit it (Infinity).
+function buildChildrenNode(selfPerson, selfGeneration, maxGeneration) {
   const node = document.createElement("div");
   node.className = "descendant-node";
-  node.dataset.generation = generation;
+  node.dataset.generation = selfGeneration;
 
-  const role = descendantRole(generation);
-  const card = makePersonCard(role, person, generation === 1 ? "person-self" : "person-descendant");
-  const badge = document.createElement("div");
-  badge.className = "gen-badge";
-  badge.textContent = I18n.t("genBadge", { n: generation });
-  card.appendChild(badge);
+  const card = makePersonCard("self", selfPerson, "person-self");
+  const selfBadge = document.createElement("div");
+  selfBadge.className = "gen-badge";
+  selfBadge.textContent = I18n.t("genBadge", { n: selfGeneration });
+  card.appendChild(selfBadge);
   node.appendChild(card);
 
-  const children = person.children || [];
-  if (children.length && generation < maxGeneration) {
+  const children = selfPerson.children || [];
+  const childGeneration = selfGeneration + 1;
+  if (children.length && childGeneration <= maxGeneration) {
     const childrenWrap = document.createElement("div");
     childrenWrap.className = "descendant-children";
     children.forEach((child) => {
-      childrenWrap.appendChild(buildDescendantNode(child, generation + 1, maxGeneration));
+      const childCard = makePersonCard("child", child, "person-descendant");
+      const badge = document.createElement("div");
+      badge.className = "gen-badge";
+      badge.textContent = I18n.t("genBadge", { n: childGeneration });
+      childCard.appendChild(badge);
+      childrenWrap.appendChild(childCard);
     });
     node.appendChild(childrenWrap);
   }
@@ -288,101 +335,96 @@ function buildDescendantNode(person, generation, maxGeneration) {
   return node;
 }
 
-// Draws local SVG connectors from each node with children to those direct
-// children only (scoped to that node's own wrapper), then recurses —
-// see buildDescendantNode's comment for why this can't reuse drawConnectors.
-function drawDescendantConnectors(node) {
+// Draws the local connector from self's card to its direct children row
+// (see buildChildrenNode's comment for why this can't reuse drawConnectors).
+function drawChildrenConnector(node) {
   const card = node.querySelector(":scope > .person");
   const childrenWrap = node.querySelector(":scope > .descendant-children");
   if (!card || !childrenWrap) return;
 
-  const childNodes = Array.from(childrenWrap.children);
-  const childCards = childNodes.map((n) => n.querySelector(":scope > .person")).filter(Boolean);
-  if (childCards.length) {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("class", "connectors");
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.overflow = "visible";
-    svg.style.pointerEvents = "none";
+  const childCards = Array.from(childrenWrap.querySelectorAll(":scope > .person"));
+  if (!childCards.length) return;
 
-    node.style.position = "relative";
-    const nodeRect = node.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    const fromX = cardRect.left + cardRect.width / 2 - nodeRect.left;
-    const fromY = cardRect.bottom - nodeRect.top;
-    const wrapRect = childrenWrap.getBoundingClientRect();
-    const toY = wrapRect.top - nodeRect.top;
-    const midY = (fromY + toY) / 2;
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("class", "connectors");
+  svg.style.position = "absolute";
+  svg.style.top = "0";
+  svg.style.left = "0";
+  svg.style.width = "100%";
+  svg.style.height = "100%";
+  svg.style.overflow = "visible";
+  svg.style.pointerEvents = "none";
 
-    const trunk = document.createElementNS(svgNS, "line");
-    trunk.setAttribute("x1", fromX);
-    trunk.setAttribute("y1", fromY);
-    trunk.setAttribute("x2", fromX);
-    trunk.setAttribute("y2", midY);
-    trunk.setAttribute("class", "connector-line");
-    svg.appendChild(trunk);
+  node.style.position = "relative";
+  const nodeRect = node.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  const fromX = cardRect.left + cardRect.width / 2 - nodeRect.left;
+  const fromY = cardRect.bottom - nodeRect.top;
+  const wrapRect = childrenWrap.getBoundingClientRect();
+  const toY = wrapRect.top - nodeRect.top;
+  const midY = (fromY + toY) / 2;
 
-    const centers = childCards.map((c) => {
-      const r = c.getBoundingClientRect();
-      return r.left + r.width / 2 - nodeRect.left;
-    });
-    if (centers.length === 1) {
+  const trunk = document.createElementNS(svgNS, "line");
+  trunk.setAttribute("x1", fromX);
+  trunk.setAttribute("y1", fromY);
+  trunk.setAttribute("x2", fromX);
+  trunk.setAttribute("y2", midY);
+  trunk.setAttribute("class", "connector-line");
+  svg.appendChild(trunk);
+
+  const centers = childCards.map((c) => {
+    const r = c.getBoundingClientRect();
+    return r.left + r.width / 2 - nodeRect.left;
+  });
+  if (centers.length === 1) {
+    const drop = document.createElementNS(svgNS, "line");
+    drop.setAttribute("x1", fromX);
+    drop.setAttribute("y1", midY);
+    drop.setAttribute("x2", centers[0]);
+    drop.setAttribute("y2", toY);
+    drop.setAttribute("class", "connector-line");
+    svg.appendChild(drop);
+  } else {
+    const bar = document.createElementNS(svgNS, "line");
+    bar.setAttribute("x1", Math.min(...centers));
+    bar.setAttribute("y1", midY);
+    bar.setAttribute("x2", Math.max(...centers));
+    bar.setAttribute("y2", midY);
+    bar.setAttribute("class", "connector-line");
+    svg.appendChild(bar);
+    centers.forEach((cx) => {
       const drop = document.createElementNS(svgNS, "line");
-      drop.setAttribute("x1", fromX);
+      drop.setAttribute("x1", cx);
       drop.setAttribute("y1", midY);
-      drop.setAttribute("x2", centers[0]);
+      drop.setAttribute("x2", cx);
       drop.setAttribute("y2", toY);
       drop.setAttribute("class", "connector-line");
       svg.appendChild(drop);
-    } else {
-      const bar = document.createElementNS(svgNS, "line");
-      bar.setAttribute("x1", Math.min(...centers));
-      bar.setAttribute("y1", midY);
-      bar.setAttribute("x2", Math.max(...centers));
-      bar.setAttribute("y2", midY);
-      bar.setAttribute("class", "connector-line");
-      svg.appendChild(bar);
-      centers.forEach((cx) => {
-        const drop = document.createElementNS(svgNS, "line");
-        drop.setAttribute("x1", cx);
-        drop.setAttribute("y1", midY);
-        drop.setAttribute("x2", cx);
-        drop.setAttribute("y2", toY);
-        drop.setAttribute("class", "connector-line");
-        svg.appendChild(drop);
-      });
-    }
-    node.insertBefore(svg, node.firstChild);
+    });
   }
-
-  childNodes.forEach(drawDescendantConnectors);
+  node.insertBefore(svg, node.firstChild);
 }
 
 function renderFamilyTree(container, data, opts) {
   opts = opts || {};
   const maxGeneration = opts.maxGeneration || Infinity;
   container.innerHTML = "";
-  const { el, rows } = buildFamilyTree(data);
+  const { el, rows, rootTier } = buildFamilyTree(data);
 
-  // Self is Generation 1 (Family Root in Singapore); descendants render as
-  // their own recursive subtree directly below the self+siblings row,
-  // replacing self's plain person card with one that also carries its
-  // children (siblings themselves are a separate generation-1 concept and
-  // keep rendering as plain cards, unaffected).
-  const descendantRoot = buildDescendantNode(data.self, 1, maxGeneration);
+  // Self's generation number depends on the dynamic root (see
+  // generationRootTier) — self's own children render as one flat row
+  // directly below, replacing self's plain card in the self+siblings row.
+  const selfGeneration = generationNumber("self", rootTier);
+  const childrenNode = buildChildrenNode(data.self, selfGeneration, maxGeneration);
   const selfCard = el.querySelector('.gen-children [data-role="self"]');
-  if (selfCard) selfCard.replaceWith(descendantRoot);
+  if (selfCard) selfCard.replaceWith(childrenNode);
 
   container.appendChild(el);
   // connectors need layout to exist first
   requestAnimationFrame(() => {
     drawConnectors(el, rows);
-    drawDescendantConnectors(descendantRoot);
+    drawChildrenConnector(childrenNode);
   });
   return el;
 }

@@ -12,16 +12,6 @@ function blankPerson() {
   return { name: "", job: "", photo: null };
 }
 
-// Descendant of "self" — self is treated as the Family Root in Singapore
-// (Generation 1); each entry in a `children` array is one generation down
-// (self's children = Gen 2, their children = Gen 3, ...), unlimited depth.
-// This is a separate concept from `siblings` (people in self's OWN
-// generation) and from the fixed ancestor slots (father/mother/grandparent/
-// great-grandparent) above self — see js/tree.js and js/chart-editor.js.
-function blankDescendant() {
-  return { name: "", job: "", photo: null, children: [] };
-}
-
 // DREAMS 2026 visitor survey — completed before the family chart. Kept
 // entirely local (see js/csv-log.js): never sent to Firestore (js/sync.js
 // strips this key out before writing), only exported to CSV by staff.
@@ -51,7 +41,7 @@ function blankSurvey() {
 function blankState() {
   return {
     lang: "en",
-    self: { name: "", job: "", photo: null, children: [] }, // self = Family Root in Singapore, Generation 1
+    self: { name: "", job: "", photo: null, children: [] }, // children: self's own children only ({name,job,photo,gender}) — no grandchildren; see js/tree.js's generationRootTier for how "Family Root in Singapore" (Generation 1) is determined
     hasSiblings: null, // true/false
     siblingCount: 0,
     siblings: [], // { name, type, job, photo }
