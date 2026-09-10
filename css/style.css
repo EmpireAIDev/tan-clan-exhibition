@@ -403,21 +403,13 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   white-space: nowrap;
 }
 
-/* --- descendants of self (self = Generation 1) --- */
-.gen-children { align-items: flex-start; } /* let self's descendant subtree grow down without stretching siblings */
-.descendant-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-.descendant-children {
-  display: flex;
+/* --- self's own children — a separate row after self+siblings, not
+   nested inside it (nesting caused sibling cards to wrap onto a new line
+   that collided with self's children once self's own subtree grew taller
+   than a plain sibling card) --- */
+.gen-self-children {
   gap: 20px;
   flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 34px;
-  position: relative;
 }
 .generation-legend {
   font-size: 13px;

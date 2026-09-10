@@ -207,9 +207,37 @@ function buildFamilyTree(data) {
   return { el, rows, rootTier };
 }
 
-// Draws simple vertical connector lines between consecutive generation rows,
-// using an absolutely positioned SVG overlay sized to the tree container.
-function drawConnectors(container, rows) {
+// Self's own children (one level only — no grandchildren) as a real,
+// separate row appended after the self+siblings row — NOT nested inside
+// self's own flex item there. Earlier this nested a nested wrapper inside
+// `.gen-children`, and once self's own subtree grew taller than a plain
+// sibling card, `.gen-children`'s flex-wrap could push a later sibling
+// onto a new line that visually collided with self's children below it.
+// A dedicated row sidesteps that entirely. maxGeneration (optional) hides
+// this row once it would exceed the cap — used by printing.
+function buildSelfChildrenRow(selfPerson, childGeneration, maxGeneration) {
+  const children = selfPerson.children || [];
+  if (!children.length || childGeneration > maxGeneration) return null;
+
+  const row = document.createElement("div");
+  row.className = "gen gen-self-children";
+  children.forEach((child) => {
+    const card = makePersonCard("child", child, "person-descendant");
+    const badge = document.createElement("div");
+    badge.className = "gen-badge";
+    badge.textContent = I18n.t("genBadge", { n: childGeneration });
+    card.appendChild(badge);
+    row.appendChild(card);
+  });
+  return row;
+}
+
+// Draws vertical connector lines between consecutive generation rows, using
+// an absolutely positioned SVG overlay sized to the tree container. `extra`
+// (optional) draws one more connector from a single card (self) down to a
+// row of its own — used for self's children row, since siblings don't have
+// children and a plain row-to-row connection would incorrectly include them.
+function drawConnectors(container, rows, extra) {
   const old = container.querySelector("svg.connectors");
   if (old) old.remove();
 
@@ -226,20 +254,17 @@ function drawConnectors(container, rows) {
 
   const containerRect = container.getBoundingClientRect();
 
-  for (let i = 0; i < rows.length - 1; i++) {
-    const fromRow = rows[i];
-    const toRow = rows[i + 1];
-    const fromRect = fromRow.getBoundingClientRect();
-    const toChildren = Array.from(toRow.querySelectorAll(".person"));
-    if (!toChildren.length) continue;
-
+  function connect(fromRect, toChildren) {
+    if (!toChildren.length) return;
     const fromCenterX = fromRect.left + fromRect.width / 2 - containerRect.left;
     const fromY = fromRect.bottom - containerRect.top;
-    const toRect = toRow.getBoundingClientRect();
-    const toY = toRect.top - containerRect.top;
+    const centers = toChildren.map((c) => {
+      const r = c.getBoundingClientRect();
+      return r.left + r.width / 2 - containerRect.left;
+    });
+    const toY = Math.min(...toChildren.map((c) => c.getBoundingClientRect().top)) - containerRect.top;
     const midY = (fromY + toY) / 2;
 
-    // trunk line down from the parent row
     const trunk = document.createElementNS(svgNS, "line");
     trunk.setAttribute("x1", fromCenterX);
     trunk.setAttribute("y1", fromY);
@@ -248,39 +273,22 @@ function drawConnectors(container, rows) {
     trunk.setAttribute("class", "connector-line");
     svg.appendChild(trunk);
 
-    if (toChildren.length === 1) {
-      const cardRect = toChildren[0].getBoundingClientRect();
-      const cx = cardRect.left + cardRect.width / 2 - containerRect.left;
+    if (centers.length === 1) {
       const drop = document.createElementNS(svgNS, "line");
       drop.setAttribute("x1", fromCenterX);
       drop.setAttribute("y1", midY);
-      drop.setAttribute("x2", cx);
+      drop.setAttribute("x2", centers[0]);
       drop.setAttribute("y2", toY);
       drop.setAttribute("class", "connector-line");
       svg.appendChild(drop);
     } else {
-      const centers = toChildren.map((c) => {
-        const r = c.getBoundingClientRect();
-        return r.left + r.width / 2 - containerRect.left;
-      });
-      const leftMost = Math.min(...centers);
-      const rightMost = Math.max(...centers);
       const bar = document.createElementNS(svgNS, "line");
-      bar.setAttribute("x1", leftMost);
+      bar.setAttribute("x1", Math.min(...centers));
       bar.setAttribute("y1", midY);
-      bar.setAttribute("x2", rightMost);
+      bar.setAttribute("x2", Math.max(...centers));
       bar.setAttribute("y2", midY);
       bar.setAttribute("class", "connector-line");
       svg.appendChild(bar);
-
-      // connect trunk to bar
-      const toBar = document.createElementNS(svgNS, "line");
-      toBar.setAttribute("x1", fromCenterX);
-      toBar.setAttribute("y1", midY);
-      toBar.setAttribute("x2", fromCenterX);
-      toBar.setAttribute("y2", midY);
-      svg.appendChild(toBar);
-
       centers.forEach((cx) => {
         const drop = document.createElementNS(svgNS, "line");
         drop.setAttribute("x1", cx);
@@ -293,117 +301,16 @@ function drawConnectors(container, rows) {
     }
   }
 
+  for (let i = 0; i < rows.length - 1; i++) {
+    connect(rows[i].getBoundingClientRect(), Array.from(rows[i + 1].querySelectorAll(".person")));
+  }
+
+  if (extra && extra.fromCard && extra.toRow) {
+    connect(extra.fromCard.getBoundingClientRect(), Array.from(extra.toRow.querySelectorAll(".person")));
+  }
+
   container.style.position = "relative";
   container.insertBefore(svg, container.firstChild);
-}
-
-// ---- self's children (one level only — no grandchildren) ----
-// A self-contained addition below the self+siblings row: self's own
-// children render as a flat row directly under self, connected with a
-// small local SVG (scoped to this wrapper) since the existing row-to-row
-// drawConnectors would incorrectly also draw a line from every sibling.
-// maxGeneration (optional) hides this row entirely once it would exceed
-// the cap — used by printing; on-screen callers omit it (Infinity).
-function buildChildrenNode(selfPerson, selfGeneration, maxGeneration) {
-  const node = document.createElement("div");
-  node.className = "descendant-node";
-  node.dataset.generation = selfGeneration;
-
-  const card = makePersonCard("self", selfPerson, "person-self");
-  const selfBadge = document.createElement("div");
-  selfBadge.className = "gen-badge";
-  selfBadge.textContent = I18n.t("genBadge", { n: selfGeneration });
-  card.appendChild(selfBadge);
-  node.appendChild(card);
-
-  const children = selfPerson.children || [];
-  const childGeneration = selfGeneration + 1;
-  if (children.length && childGeneration <= maxGeneration) {
-    const childrenWrap = document.createElement("div");
-    childrenWrap.className = "descendant-children";
-    children.forEach((child) => {
-      const childCard = makePersonCard("child", child, "person-descendant");
-      const badge = document.createElement("div");
-      badge.className = "gen-badge";
-      badge.textContent = I18n.t("genBadge", { n: childGeneration });
-      childCard.appendChild(badge);
-      childrenWrap.appendChild(childCard);
-    });
-    node.appendChild(childrenWrap);
-  }
-
-  return node;
-}
-
-// Draws the local connector from self's card to its direct children row
-// (see buildChildrenNode's comment for why this can't reuse drawConnectors).
-function drawChildrenConnector(node) {
-  const card = node.querySelector(":scope > .person");
-  const childrenWrap = node.querySelector(":scope > .descendant-children");
-  if (!card || !childrenWrap) return;
-
-  const childCards = Array.from(childrenWrap.querySelectorAll(":scope > .person"));
-  if (!childCards.length) return;
-
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("class", "connectors");
-  svg.style.position = "absolute";
-  svg.style.top = "0";
-  svg.style.left = "0";
-  svg.style.width = "100%";
-  svg.style.height = "100%";
-  svg.style.overflow = "visible";
-  svg.style.pointerEvents = "none";
-
-  node.style.position = "relative";
-  const nodeRect = node.getBoundingClientRect();
-  const cardRect = card.getBoundingClientRect();
-  const fromX = cardRect.left + cardRect.width / 2 - nodeRect.left;
-  const fromY = cardRect.bottom - nodeRect.top;
-  const wrapRect = childrenWrap.getBoundingClientRect();
-  const toY = wrapRect.top - nodeRect.top;
-  const midY = (fromY + toY) / 2;
-
-  const trunk = document.createElementNS(svgNS, "line");
-  trunk.setAttribute("x1", fromX);
-  trunk.setAttribute("y1", fromY);
-  trunk.setAttribute("x2", fromX);
-  trunk.setAttribute("y2", midY);
-  trunk.setAttribute("class", "connector-line");
-  svg.appendChild(trunk);
-
-  const centers = childCards.map((c) => {
-    const r = c.getBoundingClientRect();
-    return r.left + r.width / 2 - nodeRect.left;
-  });
-  if (centers.length === 1) {
-    const drop = document.createElementNS(svgNS, "line");
-    drop.setAttribute("x1", fromX);
-    drop.setAttribute("y1", midY);
-    drop.setAttribute("x2", centers[0]);
-    drop.setAttribute("y2", toY);
-    drop.setAttribute("class", "connector-line");
-    svg.appendChild(drop);
-  } else {
-    const bar = document.createElementNS(svgNS, "line");
-    bar.setAttribute("x1", Math.min(...centers));
-    bar.setAttribute("y1", midY);
-    bar.setAttribute("x2", Math.max(...centers));
-    bar.setAttribute("y2", midY);
-    bar.setAttribute("class", "connector-line");
-    svg.appendChild(bar);
-    centers.forEach((cx) => {
-      const drop = document.createElementNS(svgNS, "line");
-      drop.setAttribute("x1", cx);
-      drop.setAttribute("y1", midY);
-      drop.setAttribute("x2", cx);
-      drop.setAttribute("y2", toY);
-      drop.setAttribute("class", "connector-line");
-      svg.appendChild(drop);
-    });
-  }
-  node.insertBefore(svg, node.firstChild);
 }
 
 function renderFamilyTree(container, data, opts) {
@@ -413,18 +320,24 @@ function renderFamilyTree(container, data, opts) {
   const { el, rows, rootTier } = buildFamilyTree(data);
 
   // Self's generation number depends on the dynamic root (see
-  // generationRootTier) — self's own children render as one flat row
-  // directly below, replacing self's plain card in the self+siblings row.
+  // generationRootTier); self's own children render as their own row,
+  // connected from self's card specifically (see buildSelfChildrenRow).
   const selfGeneration = generationNumber("self", rootTier);
-  const childrenNode = buildChildrenNode(data.self, selfGeneration, maxGeneration);
+  const selfChildrenRow = buildSelfChildrenRow(data.self, selfGeneration + 1, maxGeneration);
+  if (selfChildrenRow) {
+    el.appendChild(selfChildrenRow);
+    rows.push(selfChildrenRow);
+  }
   const selfCard = el.querySelector('.gen-children [data-role="self"]');
-  if (selfCard) selfCard.replaceWith(childrenNode);
 
   container.appendChild(el);
   // connectors need layout to exist first
   requestAnimationFrame(() => {
-    drawConnectors(el, rows);
-    drawChildrenConnector(childrenNode);
+    // Exclude the self-children row from the generic row-to-row pass (it
+    // would wrongly include siblings) — connect it separately from self's
+    // card only, via `extra`.
+    const rowsForGenericPass = selfChildrenRow ? rows.slice(0, -1) : rows;
+    drawConnectors(el, rowsForGenericPass, selfChildrenRow ? { fromCard: selfCard, toRow: selfChildrenRow } : null);
   });
   return el;
 }
