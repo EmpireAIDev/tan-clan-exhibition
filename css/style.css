@@ -553,6 +553,10 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
     align-items: center;
   }
   .journey-card, .journey-path-2 .journey-card {
+    flex: 0 0 auto; /* NOT 1 1 0 here: that's a row-layout share-the-width
+      rule, and in a column flex container with intrinsic height it can
+      collapse items to zero height — this keeps each card sized to its
+      own content when stacked vertically */
     max-width: 320px;
     width: 100%;
     transform: translateX(-14px);
