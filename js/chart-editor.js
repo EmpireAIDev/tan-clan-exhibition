@@ -133,16 +133,56 @@ function makeOriginQuestion(data, generationKey, questionKey) {
   refresh();
   chip.addEventListener("click", () => {
     openPopover(chip, (pop) => {
-      PLACES.forEach((place) => {
-        const btn = document.createElement("button");
-        btn.textContent = I18n.lang === "zh" ? place.zh : place.en;
-        btn.addEventListener("click", () => {
-          data.origins[generationKey] = place.key;
-          refresh();
-          closePopover();
+      pop.classList.add("origin-popover");
+
+      const searchInput = document.createElement("input");
+      searchInput.type = "text";
+      searchInput.className = "origin-search";
+      searchInput.placeholder = I18n.t("searchPlacePlaceholder");
+      pop.appendChild(searchInput);
+
+      // One heading + button list per group (see js/places.js's PLACE_GROUPS),
+      // so a ~70-entry list stays scannable; the search box filters both,
+      // hiding a group entirely once none of its places match.
+      const groupEntries = [];
+      PLACE_GROUPS.forEach((group) => {
+        const placesInGroup = PLACES.filter((p) => p.group === group.key);
+        if (!placesInGroup.length) return;
+
+        const heading = document.createElement("div");
+        heading.className = "origin-group-heading";
+        heading.textContent = I18n.lang === "zh" ? group.zh : group.en;
+        pop.appendChild(heading);
+
+        const buttons = placesInGroup.map((place) => {
+          const btn = document.createElement("button");
+          btn.textContent = I18n.lang === "zh" ? place.zh : place.en;
+          btn.addEventListener("click", () => {
+            data.origins[generationKey] = place.key;
+            refresh();
+            closePopover();
+          });
+          pop.appendChild(btn);
+          return { btn, en: place.en, zh: place.zh };
         });
-        pop.appendChild(btn);
+
+        groupEntries.push({ heading, buttons });
       });
+
+      function applyFilter() {
+        const q = searchInput.value.trim().toLowerCase();
+        groupEntries.forEach(({ heading, buttons }) => {
+          let anyVisible = false;
+          buttons.forEach(({ btn, en, zh }) => {
+            const match = !q || en.toLowerCase().includes(q) || zh.includes(searchInput.value.trim());
+            btn.style.display = match ? "" : "none";
+            if (match) anyVisible = true;
+          });
+          heading.style.display = anyVisible ? "" : "none";
+        });
+      }
+      searchInput.addEventListener("input", applyFilter);
+
       const clearBtn = document.createElement("button");
       clearBtn.className = "danger";
       clearBtn.textContent = I18n.t("removePhoto"); // reuse "Remove" label
@@ -152,6 +192,8 @@ function makeOriginQuestion(data, generationKey, questionKey) {
         closePopover();
       });
       pop.appendChild(clearBtn);
+
+      setTimeout(() => searchInput.focus(), 0);
     });
   });
   row.appendChild(chip);

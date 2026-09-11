@@ -623,6 +623,32 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 .photo-popover button:hover { background: var(--primary-light); }
 .photo-popover button.danger { color: var(--red); }
 
+.origin-popover { min-width: 220px; }
+.origin-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+.origin-search:focus { border-color: var(--primary); outline: none; }
+.origin-group-heading {
+  margin: 8px 4px 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+.origin-group-heading:first-of-type { border-top: none; padding-top: 0; margin-top: 4px; }
+
 /* --- family chart question panel (right side) --- */
 .question-section { margin-bottom: 28px; }
 .question-section:last-child { margin-bottom: 0; }
