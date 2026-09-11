@@ -26,7 +26,10 @@
   card.style.padding = `${PADDING_MM + HEADER_RESERVE_MM}mm ${PADDING_MM}mm ${PADDING_MM}mm`;
 
   const treeMount = document.getElementById("treeMount");
-  renderMigrationMap(treeMount, data, { animated: false });
+  // Compact variant: the full story cards' paragraph text and large
+  // gradient art would become illegible once scaled down to fit a small
+  // physical postcard — see js/migration-map.js's buildCompactStop.
+  renderMigrationMap(treeMount, data, { animated: false, compact: true });
 
   let printTriggered = false;
   let returned = false;

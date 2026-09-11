@@ -110,6 +110,47 @@ function buildConnector(delaySeconds) {
   return connector;
 }
 
+// Compact print variant — the printed postcard is small (as little as
+// ~100mm wide) and gets uniformly scaled down by print.js's fitAndPrint,
+// so the full story cards' paragraph descriptions and large gradient
+// artwork would shrink to illegible. This keeps the same pin/name/arrow
+// visual language at a size that still reads once scaled down, and is
+// deliberately NOT responsive (no row->column breakpoint) — the printed
+// page is a fixed physical size, and a layout that repositions itself
+// based on CSS width doesn't match what fitAndPrint measured on screen.
+function buildCompactStop(stop, index, total) {
+  const theme = getPlaceTheme(stop.place);
+  const isFinal = index === total - 1;
+
+  const item = document.createElement("div");
+  item.className = "journey-compact-stop" + (isFinal ? " journey-compact-final" : "");
+
+  const badge = document.createElement("div");
+  badge.className = "journey-compact-badge";
+  badge.style.background = "linear-gradient(135deg, " + theme.gradient[0] + ", " + theme.gradient[1] + ")";
+  badge.textContent = theme.icon;
+  item.appendChild(badge);
+
+  const nameEn = document.createElement("div");
+  nameEn.className = "journey-compact-name-en";
+  nameEn.textContent = stop.place.en + (stop.place.key === "singapore" ? " 🇸🇬" : "");
+  item.appendChild(nameEn);
+
+  const nameZh = document.createElement("div");
+  nameZh.className = "journey-compact-name-zh";
+  nameZh.textContent = stop.place.zh;
+  item.appendChild(nameZh);
+
+  return item;
+}
+
+function buildCompactConnector() {
+  const connector = document.createElement("div");
+  connector.className = "journey-compact-connector";
+  connector.innerHTML = '<span class="journey-compact-arrow"></span>';
+  return connector;
+}
+
 function renderMigrationMap(container, data, opts) {
   opts = opts || {};
   container.innerHTML = "";
@@ -120,6 +161,17 @@ function renderMigrationMap(container, data, opts) {
     empty.className = "subtitle";
     empty.textContent = I18n.t("migrationMapEmpty");
     container.appendChild(empty);
+    return { replay: function () {} };
+  }
+
+  if (opts.compact) {
+    const compactWrap = document.createElement("div");
+    compactWrap.className = "journey-compact";
+    stops.forEach((stop, i) => {
+      if (i > 0) compactWrap.appendChild(buildCompactConnector());
+      compactWrap.appendChild(buildCompactStop(stop, i, stops.length));
+    });
+    container.appendChild(compactWrap);
     return { replay: function () {} };
   }
 
