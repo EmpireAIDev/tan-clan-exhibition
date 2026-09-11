@@ -1,96 +1,19 @@
-// Stylized (not survey-accurate) migration map: China down through Hong Kong/
-// Taiwan/Southeast Asia to Singapore. Shared by the on-screen animated reveal
-// and the printable postcard, same pattern as tree.js.
-
-const MAP_VIEWBOX = "0 0 500 620";
-
-function baseMapSVG() {
-  // Stylized coastlines (not survey-accurate) instead of plain ovals: China's
-  // mainland has its characteristic bays/peninsulas, Taiwan is an elongated
-  // island, Indochina tapers into the Malay peninsula, and Sumatra/Java sit
-  // apart as their own islands.
-  const land = "#DCEEE2";
-  const landAlt = "#E5F3E9";
-  const stroke = "#BFE0CB";
-  return `
-  <rect x="0" y="0" width="500" height="620" fill="#D6EFEF"></rect>
-
-  <path d="M140,90
-    Q200,20 280,25
-    Q340,20 375,45
-    Q400,55 430,75
-    Q405,90 385,105
-    Q420,110 432,130
-    Q415,145 400,150
-    Q415,165 405,180
-    Q380,205 385,225
-    Q405,235 385,250
-    Q400,270 375,285
-    Q390,300 355,310
-    Q320,325 280,315
-    Q240,305 205,285
-    Q170,265 150,230
-    Q210,245 195,215
-    Q140,190 95,175
-    Q110,140 140,110
-    Q135,95 140,90 Z"
-    fill="${land}" stroke="${stroke}" stroke-width="2.5"></path>
-
-  <ellipse cx="345" cy="325" rx="16" ry="10" fill="${land}" stroke="${stroke}" stroke-width="2"></ellipse>
-
-  <path d="M405,215
-    Q426,228 420,258
-    Q414,290 397,301
-    Q384,272 389,240
-    Q391,222 405,215 Z"
-    fill="${land}" stroke="${stroke}" stroke-width="2.5"></path>
-
-  <path d="M250,300
-    Q300,308 320,340
-    Q312,375 292,398
-    Q302,428 280,458
-    Q262,472 240,460
-    Q222,432 231,400
-    Q202,372 190,340
-    Q182,310 202,290
-    Q222,282 250,300 Z"
-    fill="${landAlt}" stroke="${stroke}" stroke-width="2.5"></path>
-
-  <path d="M260,460
-    Q287,480 277,510
-    Q272,530 287,547
-    Q262,536 250,510
-    Q239,485 260,460 Z"
-    fill="${landAlt}" stroke="${stroke}" stroke-width="2.5"></path>
-
-  <path d="M290,532
-    Q305,536 306,548
-    Q304,560 290,558
-    Q278,554 279,542
-    Q281,533 290,532 Z"
-    fill="#E25A2C" stroke="#B8431A" stroke-width="2"></path>
-
-  <path d="M165,510
-    Q200,495 225,510
-    Q260,528 275,555
-    Q285,575 270,590
-    Q245,600 225,585
-    Q195,565 180,545
-    Q160,525 165,510 Z"
-    fill="${landAlt}" stroke="${stroke}" stroke-width="2.5"></path>
-
-  <path d="M288,578
-    Q328,563 375,570
-    Q410,577 424,588
-    Q398,597 358,593
-    Q318,589 293,585
-    Q283,582 288,578 Z"
-    fill="${landAlt}" stroke="${stroke}" stroke-width="2.5"></path>
-  `;
-}
+// "Your Migration Path" — a storytelling journey of location cards from the
+// family's origin through to Singapore. This replaces the earlier
+// coordinate-based SVG map with a heritage-journey card design (see
+// PROJECT_STATUS.md for context — this was a planned full revamp).
+// Shared by the on-screen reveal (index.html) and the printable postcard
+// (print-map.html), same pattern as tree.js.
+//
+// Entirely data-driven: reads data.origins (set via the "Where did they
+// live?" chips in js/chart-editor.js) through getOriginSequence, exactly
+// as the previous map did — nothing here is hardcoded to any specific
+// place. Singapore is always appended as the final stop if it isn't
+// already the last one entered. Visual theming per place lives in
+// js/migration-theme.js.
 
 // Which generations feed the path, in oldest-to-youngest order, and the
-// i18n key used for their pin label.
+// i18n key used for their stage label.
 const MAP_GENERATIONS = [
   { key: "greatGrandparents", knownFlag: "knowGreatGrandparents", labelKey: "genLabel_greatGrandparents" },
   { key: "grandparents", knownFlag: "knowGrandparents", labelKey: "genLabel_grandparents" },
@@ -104,7 +27,7 @@ function getOriginSequence(data) {
     const placeKey = data.origins && data.origins[gen.key];
     if (!placeKey) return;
     const place = PLACES_BY_KEY[placeKey];
-    if (!place || place.x === null) return;
+    if (!place) return;
     stops.push({ place, labelKey: gen.labelKey });
   });
   const last = stops[stops.length - 1];
@@ -114,9 +37,81 @@ function getOriginSequence(data) {
   return stops;
 }
 
+function journeyStageLabel(index, total) {
+  if (index === 0) return I18n.t("journeyOrigin");
+  if (index === total - 1) return I18n.t("journeyDestination");
+  return I18n.t("journeyStop");
+}
+
+function buildLocationCard(stop, index, total, delaySeconds) {
+  const theme = getPlaceTheme(stop.place);
+  const isFinal = index === total - 1;
+
+  const card = document.createElement("div");
+  card.className = "journey-card" + (isFinal ? " journey-card-final" : "");
+  card.style.setProperty("--card-grad-1", theme.gradient[0]);
+  card.style.setProperty("--card-grad-2", theme.gradient[1]);
+  card.style.setProperty("--delay", delaySeconds + "s");
+
+  const bg = document.createElement("div");
+  bg.className = "journey-card-bg";
+  const iconEl = document.createElement("span");
+  iconEl.className = "journey-card-icon";
+  iconEl.textContent = theme.icon;
+  bg.appendChild(iconEl);
+
+  const pin = document.createElement("div");
+  pin.className = "journey-pin";
+  pin.innerHTML =
+    '<svg viewBox="0 0 24 32" class="journey-pin-svg" aria-hidden="true">' +
+    '<path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z"/>' +
+    '<circle cx="12" cy="12" r="5" class="journey-pin-dot"/>' +
+    "</svg>";
+  bg.appendChild(pin);
+  card.appendChild(bg);
+
+  const body = document.createElement("div");
+  body.className = "journey-card-body";
+
+  const stageTag = document.createElement("div");
+  stageTag.className = "journey-stage-tag";
+  stageTag.textContent = journeyStageLabel(index, total);
+  body.appendChild(stageTag);
+
+  const nameEn = document.createElement("div");
+  nameEn.className = "journey-name-en";
+  nameEn.textContent = stop.place.en + (stop.place.key === "singapore" ? " 🇸🇬" : "");
+  body.appendChild(nameEn);
+
+  const nameZh = document.createElement("div");
+  nameZh.className = "journey-name-zh";
+  nameZh.textContent = stop.place.zh;
+  body.appendChild(nameZh);
+
+  const desc = document.createElement("p");
+  desc.className = "journey-description";
+  desc.textContent = getPlaceDescription(stop.place, I18n.lang);
+  body.appendChild(desc);
+
+  card.appendChild(body);
+  return card;
+}
+
+function buildConnector(delaySeconds) {
+  const connector = document.createElement("div");
+  connector.className = "journey-connector";
+  connector.style.setProperty("--delay", delaySeconds + "s");
+  const line = document.createElement("div");
+  line.className = "journey-connector-line";
+  connector.appendChild(line);
+  const arrow = document.createElement("span");
+  arrow.className = "journey-connector-arrow";
+  connector.appendChild(arrow);
+  return connector;
+}
+
 function renderMigrationMap(container, data, opts) {
   opts = opts || {};
-  const animated = !!opts.animated;
   container.innerHTML = "";
 
   const stops = getOriginSequence(data);
@@ -128,85 +123,35 @@ function renderMigrationMap(container, data, opts) {
     return { replay: function () {} };
   }
 
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", MAP_VIEWBOX);
-  svg.setAttribute("class", "migration-map-svg");
-  svg.innerHTML = baseMapSVG();
+  const wrap = document.createElement("div");
+  wrap.className = "journey-path";
+  if (stops.length === 2) wrap.classList.add("journey-path-2");
 
-  const linesGroup = document.createElementNS(svgNS, "g");
-  const pinsGroup = document.createElementNS(svgNS, "g");
-  svg.appendChild(linesGroup);
-  svg.appendChild(pinsGroup);
-  container.appendChild(svg);
-
-  const lineEls = [];
-  for (let i = 1; i < stops.length; i++) {
-    const a = stops[i - 1].place;
-    const b = stops[i].place;
-    const line = document.createElementNS(svgNS, "line");
-    line.setAttribute("x1", a.x);
-    line.setAttribute("y1", a.y);
-    line.setAttribute("x2", b.x);
-    line.setAttribute("y2", b.y);
-    line.setAttribute("class", "migration-line");
-    linesGroup.appendChild(line);
-    lineEls.push(line);
-  }
-
-  const pinEls = stops.map((stop, i) => {
-    const g = document.createElementNS(svgNS, "g");
-    g.setAttribute("class", "migration-pin");
-    const dot = document.createElementNS(svgNS, "circle");
-    dot.setAttribute("cx", stop.place.x);
-    dot.setAttribute("cy", stop.place.y);
-    dot.setAttribute("r", i === stops.length - 1 ? 9 : 7);
-    dot.setAttribute("class", i === stops.length - 1 ? "migration-dot migration-dot-final" : "migration-dot");
-    g.appendChild(dot);
-
-    const labelY = stop.place.y - 14;
-    const name = document.createElementNS(svgNS, "text");
-    name.setAttribute("x", stop.place.x);
-    name.setAttribute("y", labelY);
-    name.setAttribute("class", "migration-label");
-    name.textContent = placeLabel(stop.place.key);
-    g.appendChild(name);
-
-    const tag = document.createElementNS(svgNS, "text");
-    tag.setAttribute("x", stop.place.x);
-    tag.setAttribute("y", labelY + 12);
-    tag.setAttribute("class", "migration-tag");
-    tag.textContent = I18n.t(stop.labelKey);
-    g.appendChild(tag);
-
-    pinsGroup.appendChild(g);
-    return g;
+  stops.forEach((stop, i) => {
+    if (i > 0) wrap.appendChild(buildConnector(i * 0.35 - 0.15));
+    wrap.appendChild(buildLocationCard(stop, i, stops.length, i * 0.35));
   });
 
-  function showAllInstantly() {
-    lineEls.forEach((l) => l.classList.add("visible"));
-    pinEls.forEach((p) => p.classList.add("visible"));
+  container.appendChild(wrap);
+
+  // Kept for API parity with the previous animated map — js/flow.js's
+  // "Watch again" button calls mapControl.replay(). The reveal itself is a
+  // staggered CSS fade/slide-in (see css/style.css's .journey-revealed)
+  // rather than a JS timeline.
+  function reveal() {
+    wrap.classList.remove("journey-revealed");
+    void wrap.offsetWidth; // force reflow so the transition can restart
+    requestAnimationFrame(() => wrap.classList.add("journey-revealed"));
   }
 
-  function playAnimation() {
-    lineEls.forEach((l) => l.classList.remove("visible"));
-    pinEls.forEach((p) => p.classList.remove("visible"));
-    let i = 0;
-    function step() {
-      if (i >= pinEls.length) return;
-      pinEls[i].classList.add("visible");
-      if (i > 0) lineEls[i - 1].classList.add("visible");
-      i++;
-      if (i < pinEls.length) setTimeout(step, 900);
-    }
-    requestAnimationFrame(step);
-  }
-
-  if (animated) {
-    playAnimation();
+  if (opts.animated) {
+    reveal();
   } else {
-    showAllInstantly();
+    // Printing (and any other non-animated render) shows everything
+    // immediately — no point animating a snapshot, and it keeps print
+    // timing simple (no transition to wait out before window.print()).
+    wrap.classList.add("journey-revealed");
   }
 
-  return { replay: playAnimation };
+  return { replay: reveal };
 }
