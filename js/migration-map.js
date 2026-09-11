@@ -75,14 +75,6 @@ function buildLocationCard(stop, index, total, delaySeconds) {
     bg.insertBefore(photo, iconEl);
   }
 
-  const pin = document.createElement("div");
-  pin.className = "journey-pin";
-  pin.innerHTML =
-    '<svg viewBox="0 0 24 32" class="journey-pin-svg" aria-hidden="true">' +
-    '<path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z"/>' +
-    '<circle cx="12" cy="12" r="5" class="journey-pin-dot"/>' +
-    "</svg>";
-  bg.appendChild(pin);
   card.appendChild(bg);
 
   const body = document.createElement("div");
@@ -143,7 +135,24 @@ function buildCompactStop(stop, index, total) {
   const badge = document.createElement("div");
   badge.className = "journey-compact-badge";
   badge.style.background = "linear-gradient(135deg, " + theme.gradient[0] + ", " + theme.gradient[1] + ")";
-  badge.textContent = theme.icon;
+  const iconEl = document.createElement("span");
+  iconEl.className = "journey-compact-icon";
+  iconEl.textContent = theme.icon;
+  badge.appendChild(iconEl);
+
+  // Same landmark photo as the on-screen card, with the same graceful
+  // fallback: if it's missing or fails to load, remove it and the
+  // icon+gradient badge (already built above) stands on its own.
+  if (theme.image) {
+    const photo = document.createElement("img");
+    photo.className = "journey-compact-photo";
+    photo.alt = "";
+    photo.onload = () => badge.classList.add("has-photo");
+    photo.onerror = () => photo.remove();
+    photo.src = theme.image;
+    badge.insertBefore(photo, iconEl);
+  }
+
   item.appendChild(badge);
 
   const nameEn = document.createElement("div");

@@ -271,7 +271,11 @@
       State.data = restored;
       I18n.setLang(restored.lang || "en");
       applyLang(I18n.lang);
-      history = ["preview"];
+      // Restore the full chain (not just ["preview"]) so the "Edit answers"
+      // button's back() has somewhere to go — printing the migration map
+      // navigates away to print-map.html and back here, which would
+      // otherwise leave history with a single entry and back() a no-op.
+      history = ["welcome", "chart", "migration-map", "preview"];
       showScreen("preview");
       syncScreenUI("preview");
     } else {
