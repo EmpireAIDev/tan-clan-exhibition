@@ -1,8 +1,12 @@
 // Visual theming for the migration path journey (js/migration-map.js). This
-// kiosk is offline-first with no image CDN (see PROJECT_STATUS.md), so a
-// real landmark photo per place isn't an option — a hand-picked icon +
-// gradient stands in instead, consistent with the rest of the app's flat,
-// illustrated look (tree.js's emoji avatars, the hand-drawn SVG elsewhere).
+// kiosk is offline-first with no image CDN (see PROJECT_STATUS.md), so each
+// theme also carries a real landmark/cultural photo vendored locally into
+// assets/migration/ (freely-licensed Wikimedia Commons images). The
+// hand-picked icon + gradient remains the graceful fallback for any theme
+// without a photo, or if a photo file ever fails to load — js/migration-map.js
+// removes a broken <img> on error and leaves the icon+gradient showing,
+// consistent with the rest of the app's flat, illustrated look (tree.js's
+// emoji avatars, the hand-drawn SVG elsewhere).
 //
 // Every place (js/places.js) resolves to a theme + description via, in
 // priority order:
@@ -14,26 +18,26 @@
 // architecture → scenery → generic" fallback the design calls for.
 
 const MIGRATION_THEMES = {
-  diaolou: { icon: "🏯", gradient: ["#8B5E34", "#C9974A"] },
-  cantonTower: { icon: "🗼", gradient: ["#7C4D99", "#1AA6A6"] },
-  portCity: { icon: "⚓", gradient: ["#1AA6A6", "#0D2B45"] },
-  tulou: { icon: "🏛️", gradient: ["#C9974A", "#8B5E34"] },
-  pearlDelta: { icon: "🏙️", gradient: ["#39A96B", "#1AA6A6"] },
-  chaoshan: { icon: "🛕", gradient: ["#C62828", "#D29A1A"] },
-  hakkaHighlands: { icon: "⛰️", gradient: ["#39A96B", "#0D2B45"] },
+  diaolou: { icon: "🏯", gradient: ["#8B5E34", "#C9974A"], image: "assets/migration/diaolou.jpg" },
+  cantonTower: { icon: "🗼", gradient: ["#7C4D99", "#1AA6A6"], image: "assets/migration/cantonTower.jpg" },
+  portCity: { icon: "⚓", gradient: ["#1AA6A6", "#0D2B45"], image: "assets/migration/portCity.jpg" },
+  tulou: { icon: "🏛️", gradient: ["#C9974A", "#8B5E34"], image: "assets/migration/tulou.jpg" },
+  pearlDelta: { icon: "🏙️", gradient: ["#39A96B", "#1AA6A6"], image: "assets/migration/pearlDelta.jpg" },
+  chaoshan: { icon: "🛕", gradient: ["#C62828", "#D29A1A"], image: "assets/migration/chaoshan.jpg" },
+  hakkaHighlands: { icon: "⛰️", gradient: ["#39A96B", "#0D2B45"], image: "assets/migration/hakkaHighlands.jpg" },
   tropicalIsland: { icon: "🌴", gradient: ["#1AA6A6", "#39A96B"] },
-  karst: { icon: "⛰️", gradient: ["#1AA6A6", "#39A96B"] },
-  gardenCity: { icon: "🌸", gradient: ["#7C4D99", "#39A96B"] },
-  artDeco: { icon: "🌆", gradient: ["#D29A1A", "#0D2B45"] },
-  neonHarbour: { icon: "🌃", gradient: ["#7C4D99", "#C62828"] },
-  mountainCapital: { icon: "🗻", gradient: ["#1AA6A6", "#7C4D99"] },
-  singapore: { icon: "🦁", gradient: ["#0D2B45", "#D29A1A"] },
-  petronas: { icon: "🕌", gradient: ["#39A96B", "#D29A1A"] },
-  watTemple: { icon: "🛕", gradient: ["#C62828", "#D29A1A"] },
-  volcano: { icon: "🌋", gradient: ["#39A96B", "#8B5E34"] },
-  halongBay: { icon: "⛵", gradient: ["#1AA6A6", "#0D2B45"] },
-  islandNation: { icon: "🏝️", gradient: ["#1AA6A6", "#D29A1A"] },
-  angkor: { icon: "🛕", gradient: ["#8B5E34", "#D29A1A"] },
+  karst: { icon: "⛰️", gradient: ["#1AA6A6", "#39A96B"], image: "assets/migration/karst.jpg" },
+  gardenCity: { icon: "🌸", gradient: ["#7C4D99", "#39A96B"], image: "assets/migration/gardenCity.jpg" },
+  artDeco: { icon: "🌆", gradient: ["#D29A1A", "#0D2B45"], image: "assets/migration/artDeco.jpg" },
+  neonHarbour: { icon: "🌃", gradient: ["#7C4D99", "#C62828"], image: "assets/migration/neonHarbour.jpg" },
+  mountainCapital: { icon: "🗻", gradient: ["#1AA6A6", "#7C4D99"], image: "assets/migration/mountainCapital.jpg" },
+  singapore: { icon: "🦁", gradient: ["#0D2B45", "#D29A1A"], image: "assets/migration/singapore.jpg" },
+  petronas: { icon: "🕌", gradient: ["#39A96B", "#D29A1A"], image: "assets/migration/petronas.jpg" },
+  watTemple: { icon: "🛕", gradient: ["#C62828", "#D29A1A"], image: "assets/migration/watTemple.jpg" },
+  volcano: { icon: "🌋", gradient: ["#39A96B", "#8B5E34"], image: "assets/migration/volcano.jpg" },
+  halongBay: { icon: "⛵", gradient: ["#1AA6A6", "#0D2B45"], image: "assets/migration/halongBay.jpg" },
+  islandNation: { icon: "🏝️", gradient: ["#1AA6A6", "#D29A1A"], image: "assets/migration/islandNation.jpg" },
+  angkor: { icon: "🛕", gradient: ["#8B5E34", "#D29A1A"], image: "assets/migration/angkor.jpg" },
   generic: { icon: "📍", gradient: ["#E25A2C", "#D29A1A"] },
 };
 

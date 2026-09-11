@@ -477,10 +477,22 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   height: 40%;
   background: linear-gradient(to top, rgba(0,0,0,0.22), transparent);
 }
+.journey-card-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.journey-card-bg::after { z-index: 1; }
 .journey-card-icon {
+  position: relative;
+  z-index: 2;
   font-size: 44px;
   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
 }
+.journey-card-bg.has-photo .journey-card-icon { display: none; }
 .journey-pin {
   position: absolute;
   left: 50%;
@@ -564,7 +576,7 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 84px;
+  width: 128px;
   white-space: normal;
   text-align: center;
 }
@@ -581,7 +593,20 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 }
 .journey-compact-final .journey-compact-badge { box-shadow: 0 0 0 3px var(--gold), 0 2px 6px rgba(0,0,0,0.2); }
 .journey-compact-name-en { font-weight: 700; font-size: 11px; color: var(--ink); line-height: 1.2; }
-.journey-compact-name-zh { font-size: 10px; color: var(--muted); }
+.journey-compact-name-zh { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.journey-compact-desc {
+  font-size: 8px;
+  line-height: 1.35;
+  color: var(--muted);
+  margin: 0;
+  /* Clamp to keep the postcard compact even for a long description —
+     this is a fixed-size print layout, not a responsive one, so a plain
+     line-clamp (no breakpoint) is safe here. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .journey-compact-connector {
   flex: 0 0 auto;
   display: flex;

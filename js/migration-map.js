@@ -60,6 +60,21 @@ function buildLocationCard(stop, index, total, delaySeconds) {
   iconEl.textContent = theme.icon;
   bg.appendChild(iconEl);
 
+  // Real landmark photo when we have one, layered under the icon/gradient.
+  // If the file is missing or fails to load, just remove it — the existing
+  // icon+gradient design (bg's own background, set below) is already a
+  // complete, graceful fallback and needs no extra handling here.
+  if (theme.image) {
+    const photo = document.createElement("img");
+    photo.className = "journey-card-photo";
+    photo.alt = "";
+    photo.loading = "lazy";
+    photo.onload = () => bg.classList.add("has-photo");
+    photo.onerror = () => photo.remove();
+    photo.src = theme.image;
+    bg.insertBefore(photo, iconEl);
+  }
+
   const pin = document.createElement("div");
   pin.className = "journey-pin";
   pin.innerHTML =
@@ -140,6 +155,11 @@ function buildCompactStop(stop, index, total) {
   nameZh.className = "journey-compact-name-zh";
   nameZh.textContent = stop.place.zh;
   item.appendChild(nameZh);
+
+  const desc = document.createElement("p");
+  desc.className = "journey-compact-desc";
+  desc.textContent = getPlaceDescription(stop.place, I18n.lang);
+  item.appendChild(desc);
 
   return item;
 }
