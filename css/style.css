@@ -546,78 +546,111 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 }
 .journey-connector-arrow::after { content: "→"; }
 
-/* --- compact print variant (print-map.js) — deliberately NOT responsive:
-   the printed page is a fixed physical size that print.js's fitAndPrint
-   scales uniformly to fit, so a layout that repositions itself based on
-   CSS width (like .journey-path's mobile breakpoint) would mismatch what
-   was measured on screen. Kept in its own class namespace so it's never
-   touched by that breakpoint. --- */
-.journey-compact {
+/* --- print variant (print-map.js) — same card design as the on-screen
+   .journey-card (photo/gradient art, icon fallback, stage tag, name,
+   description), scaled down for a postcard and kept in its own
+   journey-print-* class namespace so it's never touched by .journey-card's
+   mobile breakpoint below. Deliberately NOT responsive itself: the printed
+   page is a fixed physical size that print.js's fitAndPrint scales
+   uniformly to fit (measured on screen first), so a layout that
+   repositions itself based on CSS width would mismatch what was measured
+   — see the print-layout bug this pattern was built to avoid. --- */
+.journey-print-path {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
+  gap: 8px;
 }
-.journey-compact-stop {
+.journey-print-card {
+  width: 150px;
+  flex: 0 0 150px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: 0 4px 10px rgba(13, 43, 69, 0.15);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 128px;
-  white-space: normal;
-  text-align: center;
 }
-.journey-compact-badge {
+.journey-print-final {
+  box-shadow: 0 6px 14px rgba(210, 154, 26, 0.3), 0 0 0 2px var(--gold);
+}
+.journey-print-bg {
   position: relative;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  height: 82px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  margin-bottom: 4px;
   overflow: hidden;
 }
-.journey-compact-final .journey-compact-badge { box-shadow: 0 0 0 3px var(--gold), 0 2px 6px rgba(0,0,0,0.2); }
-.journey-compact-photo {
+.journey-print-bg::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0,0,0,0.22), transparent);
+}
+.journey-print-photo {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 0;
 }
-.journey-compact-icon { position: relative; z-index: 1; }
-.journey-compact-badge.has-photo .journey-compact-icon { display: none; }
-.journey-compact-name-en { font-weight: 700; font-size: 11px; color: var(--ink); line-height: 1.2; }
-.journey-compact-name-zh { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
-.journey-compact-desc {
-  font-size: 8px;
-  line-height: 1.35;
+.journey-print-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 26px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.journey-print-bg.has-photo .journey-print-icon { display: none; }
+.journey-print-body {
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.journey-print-stage {
+  align-self: flex-start;
+  font-size: 6.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(226, 90, 44, 0.12);
+  color: var(--primary);
+}
+.journey-print-final .journey-print-stage { color: #8a6200; background: rgba(210, 154, 26, 0.22); }
+.journey-print-name-en { font-weight: 800; font-size: 12px; color: var(--ink); line-height: 1.2; }
+.journey-print-name-zh { font-weight: 600; font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.journey-print-desc {
+  font-size: 7.5px;
+  line-height: 1.3;
   color: var(--muted);
   margin: 0;
   /* Clamp to keep the postcard compact even for a long description —
      this is a fixed-size print layout, not a responsive one, so a plain
      line-clamp (no breakpoint) is safe here. */
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.journey-compact-connector {
-  flex: 0 0 auto;
+.journey-print-connector {
+  flex: 0 0 16px;
   display: flex;
   align-items: center;
-  padding-top: 18px;
+  padding-top: 41px;
 }
-.journey-compact-arrow {
-  width: 20px;
+.journey-print-arrow {
+  width: 100%;
   height: 0;
   border-top: 2px dashed var(--primary);
   position: relative;
+  display: block;
 }
-.journey-compact-arrow::after {
+.journey-print-arrow::after {
   content: "";
   position: absolute;
   right: -1px;

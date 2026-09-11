@@ -117,66 +117,78 @@ function buildConnector(delaySeconds) {
   return connector;
 }
 
-// Compact print variant — the printed postcard is small (as little as
-// ~100mm wide) and gets uniformly scaled down by print.js's fitAndPrint,
-// so the full story cards' paragraph descriptions and large gradient
-// artwork would shrink to illegible. This keeps the same pin/name/arrow
-// visual language at a size that still reads once scaled down, and is
-// deliberately NOT responsive (no row->column breakpoint) — the printed
-// page is a fixed physical size, and a layout that repositions itself
-// based on CSS width doesn't match what fitAndPrint measured on screen.
-function buildCompactStop(stop, index, total) {
+// Print variant — same card design as the on-screen "Your Migration Path"
+// (photo/gradient art, icon fallback, stage tag, name, description), just
+// under its own class namespace (journey-print-*, not journey-card/
+// journey-connector) and deliberately NOT responsive: the printed page is a
+// fixed physical size, and js/print-map.js's fitAndPrint scales this whole
+// block down to fit, measuring it on screen first — a row->column
+// breakpoint tied to CSS width would fire against the small physical print
+// page and no longer match what was measured (see the print-layout bug this
+// was built to avoid). Reusing journey-card/journey-connector directly would
+// pull in exactly that breakpoint, so this is a parallel, non-responsive set
+// of classes instead.
+function buildPrintCard(stop, index, total) {
   const theme = getPlaceTheme(stop.place);
   const isFinal = index === total - 1;
 
-  const item = document.createElement("div");
-  item.className = "journey-compact-stop" + (isFinal ? " journey-compact-final" : "");
+  const card = document.createElement("div");
+  card.className = "journey-print-card" + (isFinal ? " journey-print-final" : "");
 
-  const badge = document.createElement("div");
-  badge.className = "journey-compact-badge";
-  badge.style.background = "linear-gradient(135deg, " + theme.gradient[0] + ", " + theme.gradient[1] + ")";
+  const bg = document.createElement("div");
+  bg.className = "journey-print-bg";
+  bg.style.background = "linear-gradient(135deg, " + theme.gradient[0] + ", " + theme.gradient[1] + ")";
   const iconEl = document.createElement("span");
-  iconEl.className = "journey-compact-icon";
+  iconEl.className = "journey-print-icon";
   iconEl.textContent = theme.icon;
-  badge.appendChild(iconEl);
+  bg.appendChild(iconEl);
 
-  // Same landmark photo as the on-screen card, with the same graceful
-  // fallback: if it's missing or fails to load, remove it and the
-  // icon+gradient badge (already built above) stands on its own.
+  // Same graceful fallback as the on-screen card: if the photo is missing
+  // or fails to load, remove it and the icon+gradient background stands on
+  // its own — no broken-image glyph, no layout break.
   if (theme.image) {
     const photo = document.createElement("img");
-    photo.className = "journey-compact-photo";
+    photo.className = "journey-print-photo";
     photo.alt = "";
-    photo.onload = () => badge.classList.add("has-photo");
+    photo.onload = () => bg.classList.add("has-photo");
     photo.onerror = () => photo.remove();
     photo.src = theme.image;
-    badge.insertBefore(photo, iconEl);
+    bg.insertBefore(photo, iconEl);
   }
 
-  item.appendChild(badge);
+  card.appendChild(bg);
+
+  const body = document.createElement("div");
+  body.className = "journey-print-body";
+
+  const stageTag = document.createElement("div");
+  stageTag.className = "journey-print-stage";
+  stageTag.textContent = journeyStageLabel(index, total);
+  body.appendChild(stageTag);
 
   const nameEn = document.createElement("div");
-  nameEn.className = "journey-compact-name-en";
+  nameEn.className = "journey-print-name-en";
   nameEn.textContent = stop.place.en + (stop.place.key === "singapore" ? " 🇸🇬" : "");
-  item.appendChild(nameEn);
+  body.appendChild(nameEn);
 
   const nameZh = document.createElement("div");
-  nameZh.className = "journey-compact-name-zh";
+  nameZh.className = "journey-print-name-zh";
   nameZh.textContent = stop.place.zh;
-  item.appendChild(nameZh);
+  body.appendChild(nameZh);
 
   const desc = document.createElement("p");
-  desc.className = "journey-compact-desc";
+  desc.className = "journey-print-desc";
   desc.textContent = getPlaceDescription(stop.place, I18n.lang);
-  item.appendChild(desc);
+  body.appendChild(desc);
 
-  return item;
+  card.appendChild(body);
+  return card;
 }
 
-function buildCompactConnector() {
+function buildPrintConnector() {
   const connector = document.createElement("div");
-  connector.className = "journey-compact-connector";
-  connector.innerHTML = '<span class="journey-compact-arrow"></span>';
+  connector.className = "journey-print-connector";
+  connector.innerHTML = '<span class="journey-print-arrow"></span>';
   return connector;
 }
 
@@ -194,13 +206,13 @@ function renderMigrationMap(container, data, opts) {
   }
 
   if (opts.compact) {
-    const compactWrap = document.createElement("div");
-    compactWrap.className = "journey-compact";
+    const printWrap = document.createElement("div");
+    printWrap.className = "journey-print-path";
     stops.forEach((stop, i) => {
-      if (i > 0) compactWrap.appendChild(buildCompactConnector());
-      compactWrap.appendChild(buildCompactStop(stop, i, stops.length));
+      if (i > 0) printWrap.appendChild(buildPrintConnector());
+      printWrap.appendChild(buildPrintCard(stop, i, stops.length));
     });
-    container.appendChild(compactWrap);
+    container.appendChild(printWrap);
     return { replay: function () {} };
   }
 
