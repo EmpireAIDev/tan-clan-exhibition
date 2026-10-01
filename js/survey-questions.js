@@ -10,28 +10,21 @@ const SURVEY_EVENT_SOURCE = "DREAMS 2026";
 
 // Bump this whenever the PDPA notice wording below changes, so every CSV
 // row records exactly which version of the notice the visitor consented to.
-const SURVEY_CONSENT_VERSION = "v1-2026-09-03";
+const SURVEY_CONSENT_VERSION = "v2-2026-09-25";
 
 function surveyOptionLabel(opt) {
   return I18n.lang === "zh" ? opt.zh : opt.en;
 }
 
-const EXHIBITION_INTERESTS = [
-  { key: "roots", en: "Roots / genealogy / family history", zh: "根源／家谱／家族历史" },
-  { key: "heritage", en: "Heritage & culture", zh: "文化传承" },
-  { key: "arts", en: "Arts & creativity", zh: "艺术与创意" },
-  { key: "wellness", en: "Wellness", zh: "身心健康" },
-  { key: "music", en: "Music & performance", zh: "音乐与表演" },
-  { key: "ai", en: "AI & digital learning", zh: "人工智能与数码学习" },
-  { key: "intergenerational", en: "Intergenerational activities", zh: "跨代活动" },
-  { key: "community", en: "Community networking", zh: "社区联谊" },
-  { key: "entrepreneurship", en: "Entrepreneurship / business opportunities", zh: "创业／商机" },
-];
-
-const ROOTS_INTEREST_OPTIONS = [
-  { key: "yes", en: "Yes", zh: "是" },
-  { key: "maybe", en: "Maybe", zh: "或许" },
-  { key: "not_now", en: "Not at the moment", zh: "暂时不需要" },
+// The six DREAMS pillars, per the final field list from OOY. Order matches
+// the acronym: Discovery, Remember, Express, Art, Mindfulness, Smart.
+const DREAMS_AREAS = [
+  { key: "discovery", en: "Discovery — Genealogy", zh: "探索 (Discovery) — 家谱" },
+  { key: "remember", en: "Remember — Heritage", zh: "缅怀 (Remember) — 文化传承" },
+  { key: "express", en: "Express — Culture", zh: "表达 (Express) — 文化" },
+  { key: "art", en: "Art — Creativity", zh: "艺术 (Art) — 创意" },
+  { key: "mindfulness", en: "Mindfulness — Wellbeing", zh: "静心 (Mindfulness) — 身心健康" },
+  { key: "smart", en: "Smart — Technology", zh: "智慧 (Smart) — 科技" },
 ];
 
 const FUTURE_ACTIVITIES = [
@@ -51,13 +44,11 @@ const FUTURE_ACTIVITIES = [
 
 const AGE_GROUPS = [
   { key: "under18", en: "Under 18", zh: "18岁以下" },
-  { key: "18_29", en: "18–29", zh: "18–29岁" },
-  { key: "30_39", en: "30–39", zh: "30–39岁" },
-  { key: "40_49", en: "40–49", zh: "40–49岁" },
-  { key: "50_59", en: "50–59", zh: "50–59岁" },
-  { key: "60_69", en: "60–69", zh: "60–69岁" },
-  { key: "70plus", en: "70+", zh: "70岁以上" },
-  { key: "prefer_not", en: "Prefer not to say", zh: "不愿透露" },
+  { key: "18_25", en: "18–25", zh: "18–25岁" },
+  { key: "26_35", en: "26–35", zh: "26–35岁" },
+  { key: "36_45", en: "36–45", zh: "36–45岁" },
+  { key: "46_60", en: "46–60", zh: "46–60岁" },
+  { key: "above60", en: "Above 60", zh: "60岁以上" },
 ];
 
 const GENDERS = [
@@ -78,8 +69,12 @@ const PDPA_NOTICE_PARAGRAPHS = [
     zh: "OOY CIRCLE 是 Pek Sek Tan Clan Association（碧山陈氏公会）旗下的一个项目／部门。",
   },
   {
-    en: "The personal information provided through this form will be collected, used and stored by Pek Sek Tan Clan Association for purposes relevant to the selections made above, including visitor feedback and programme planning, administration of OOY CIRCLE membership, responding to requests to participate or volunteer, and communicating information about OOY CIRCLE programmes and activities where consent has been given.",
-    zh: "通过本表格提供的个人资料将由 Pek Sek Tan Clan Association 收集、使用及储存，用于与上述所选项目相关的用途，包括访客反馈与项目规划、OOY CIRCLE 会员资格的管理、回应参与或志愿服务的请求，以及在您已同意的情况下，传达有关 OOY CIRCLE 项目和活动的信息。",
+    en: "We collect the information above to run today's DREAMS Digital Journey, plan future OOY CIRCLE programmes, and — only if you provide a WhatsApp number or email — to contact Lucky Draw winners.",
+    zh: "我们收集以上资料，用于开展今天的 DREAMS 数码之旅、规划 OOY CIRCLE 未来的项目，并且仅在您提供 WhatsApp 号码或电子邮件时，用于联系幸运抽奖得主。",
+  },
+  {
+    en: "Entering the Lucky Draw does not require you to agree to receive future OOY CIRCLE communications — these are separate choices, and you may opt in to one, both or neither.",
+    zh: "参加幸运抽奖并不代表您同意接收 OOY CIRCLE 未来的资讯 — 这是两项各自独立的选择，您可以选择其中一项、两项，或都不选。",
   },
   {
     en: "Personal data will be handled in accordance with Singapore's Personal Data Protection Act 2012 and the Association's applicable privacy practices.",
@@ -91,28 +86,23 @@ const PDPA_NOTICE_PARAGRAPHS = [
   },
 ];
 
-// Ordered to match the "Database Requirements" list exactly, so the CSV
-// header row and js/survey.js's buildCsvRow() stay in lockstep. Kept
-// English-only regardless of display language, so exported data isn't
-// split across two languages depending on which visitor answered it.
+// Ordered to match the final OOY field list exactly, so the CSV header row
+// and js/survey.js's buildCsvRow() stay in lockstep. Kept English-only
+// regardless of display language, so exported data isn't split across two
+// languages depending on which visitor answered it.
 const SURVEY_CSV_COLUMNS = [
   "Timestamp",
   "Event Source",
-  "Rating (1-5)",
-  "Exhibition Interests",
-  "Roots Interest",
-  "Future Programmes",
+  "Name",
   "Age Group",
   "Gender",
-  "Hobbies/Interests",
-  "Name",
+  "DREAMS Areas Interested",
+  "Future OOY Activities",
+  "Clan/Community/Association",
   "Mobile/WhatsApp",
   "Email",
-  "Join OOY Circle",
-  "Keep Informed",
-  "Volunteer/Contribute",
-  "Contribution Details",
-  "Next Chapter Suggestion",
+  "Lucky Draw Eligible",
+  "Keep Informed (Future Communications)",
   "PDPA Consent",
   "Consent Timestamp",
   "Consent Version",

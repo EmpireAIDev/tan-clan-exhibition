@@ -1,6 +1,10 @@
 firebase-debug.log
 node_modules/
 
+# Local Claude Code session scaffolding (dev-server launch config, local
+# permission settings, scheduler lock) — machine-specific, not app code.
+.claude/
+
 # Local-only staff admin portal — contains hardcoded admin credentials,
 # must never be published to the public repo.
 admin/

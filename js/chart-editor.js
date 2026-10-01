@@ -265,6 +265,17 @@ function makeQuestionPersonBlock(role, person, opts) {
   nameRow.appendChild(nameInputRow);
   block.appendChild(nameRow);
 
+  // Surname lookup only applies to the visitor's own name — see
+  // js/surname-picker.js. A separate input listener (rather than folding
+  // into the one above) keeps that lookup logic out of the generic
+  // name-field handler shared by every other role.
+  if (opts.surname) {
+    const picker = SurnamePicker.mount(block, person, () => {
+      if (opts.onPersonChange) opts.onPersonChange();
+    });
+    nameInput.addEventListener("input", () => picker.sync());
+  }
+
   if (opts.showTypeSelect) {
     const typeRow = document.createElement("div");
     typeRow.className = "question-row";
@@ -395,6 +406,7 @@ function renderQuestionPanel(container, data, callbacks) {
     makeQuestionPersonBlock("self", data.self, {
       nameLabelKey: "nameLabel",
       jobLabelKey: "selfJobLabel",
+      surname: true,
       onPersonChange: callbacks.onPersonChange,
     })
   );

@@ -95,7 +95,8 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 .lang-toggle {
   display: flex;
   gap: 6px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px;
@@ -116,7 +117,8 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 
 .settings-btn {
   border: 1px solid var(--border);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
   border-radius: 999px;
   width: 40px;
   height: 40px;
@@ -307,28 +309,41 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   font-size: 18px;
   font-weight: 600;
 }
+/* Same maroon-to-red gradient + gold hairline as the opening screen's CTA
+   (see .welcome-screen .btn-start below), so every primary action in the
+   kiosk carries the same ink-wash brand treatment rather than a flat
+   corporate orange. */
 .btn-primary {
-  background: var(--primary);
-  color: #fff;
+  background: linear-gradient(180deg, #C1462B 0%, #96301C 100%);
+  border: 1.5px solid #E8C27A;
+  color: #FBEFD9;
+  box-shadow: 0 6px 16px rgba(120, 40, 20, 0.3);
 }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
 .btn-primary:disabled {
-  background: #F0B49E;
+  background: #E0B39E;
+  border-color: #E0B39E;
+  color: #fff;
+  box-shadow: none;
   cursor: not-allowed;
 }
 .btn-ghost {
-  background: transparent;
+  background: var(--card);
   color: var(--muted);
   border: 2px solid var(--border);
 }
+.btn-uppercase { letter-spacing: 1px; }
 .btn-start {
   padding: 20px 56px;
   font-size: 24px;
   border-radius: 999px;
-  border: none;
-  background: var(--primary);
-  color: #fff;
+  border: 1.5px solid #E8C27A;
+  background: linear-gradient(180deg, #C1462B 0%, #96301C 100%);
+  color: #FBEFD9;
   font-weight: 700;
+  box-shadow: 0 8px 20px rgba(120, 40, 20, 0.35);
 }
+.btn-start:hover { filter: brightness(1.05); }
 
 /* --- family tree --- */
 .family-tree {
@@ -958,13 +973,41 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   padding: 12px;
   border: 2px dashed var(--border);
   border-radius: 16px;
-  background: transparent;
+  background: var(--card);
   color: var(--muted);
   font-size: 14px;
   font-weight: 600;
   text-align: center;
 }
 .add-sibling-card:hover { border-color: var(--primary); color: var(--primary); }
+
+/* --- surname picker (see js/surname-picker.js) --- */
+.surname-field { margin-top: 14px; }
+.surname-field .type-grid { grid-template-columns: 1fr 1fr; }
+.surname-hint { margin: 0 0 10px; }
+.surname-search-toggle {
+  display: block;
+  margin: 2px auto 0;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.surname-search-wrap { display: none; margin-top: 10px; }
+.surname-search-wrap input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 10px;
+}
+.surname-search-wrap input[type="text"]:focus { border-color: var(--primary); }
 
 .remove-sibling-btn {
   position: absolute;
@@ -1107,7 +1150,7 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   margin-top: 20px !important;
 }
 .survey-thanks-brand {
-  font-family: "Dancing Script", "Montserrat", cursive; /* brand accent, see print.css's .card-header-script */
+  font-family: "Dancing Script", "Montserrat", cursive; /* brand accent — unused since the OOY logo image replaced this text on both screens that had it; kept in case a future screen wants the same script treatment */
   font-size: 34px;
   font-weight: 700;
   color: var(--gold);
@@ -1115,13 +1158,141 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
 }
 .survey-thanks-tagline { color: var(--muted); }
 
-/* --- opening screen --- */
-.welcome-screen {
+/* --- shared ink-wash background --------------------------------------
+   Full-bleed ink-wash (水墨畫) landscape background (assets/welcome-bg.webp,
+   supplied by OOY — a plain landscape with no text baked into the art, so
+   it never collides with any text rendered on top in HTML below). Every
+   kiosk screen takes over position:fixed so it can cover the whole
+   viewport regardless of the .screens flex/padding layout described above.
+   Each gets its own overflow-y:auto since it's no longer scrolled by
+   .screens once fixed. z-index sits below .topbar (20) so the language
+   toggle/settings gear stay usable on top of the artwork. */
+.screen.active.welcome-screen,
+.screen.active.survey-screen,
+.screen.active.chart-screen,
+.screen.active.migration-screen,
+.screen.active.preview-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  max-width: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+.screen.active.welcome-screen {
+  justify-content: center;
+  background:
+    linear-gradient(180deg, rgba(247, 241, 227, 0.12) 0%, rgba(247, 241, 227, 0.38) 78%, rgba(247, 241, 227, 0.55) 100%),
+    url("../assets/welcome-bg.webp") center / cover no-repeat;
+}
+/* Every other screen is a functional working screen, not a decorative
+   moment — a much stronger parchment wash keeps labels/buttons/trees
+   legible while still letting the art read as a subtle texture behind
+   them. */
+.screen.active.survey-screen,
+.screen.active.chart-screen,
+.screen.active.migration-screen,
+.screen.active.preview-screen {
+  justify-content: flex-start;
+  padding-top: 96px;
+  background:
+    linear-gradient(180deg, rgba(243, 234, 216, 0.88) 0%, rgba(243, 234, 216, 0.93) 100%),
+    url("../assets/welcome-bg.webp") center / cover no-repeat;
+}
+.survey-screen .survey-inner { width: 100%; max-width: var(--max-w); }
+.chart-screen .chart-inner { width: 100%; max-width: 1100px; }
+.migration-screen .migration-inner { width: 100%; max-width: 980px; }
+.preview-screen .preview-inner { width: 100%; max-width: 1140px; }
+.welcome-screen .welcome-inner {
   max-width: 480px;
   margin: 0 auto;
-  text-align: center; /* inherited from .screen anyway, kept explicit */
 }
-.welcome-chapters { margin-top: 8px; }
+
+.welcome-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.welcome-ornament span {
+  width: 64px;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.45;
+}
+.welcome-ornament i {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--ink);
+  opacity: 0.55;
+  transform: rotate(45deg);
+  font-style: normal;
+}
+
+/* OOY CIRCLE emblem, replacing the plain brand text on the opening screen
+   only (the survey-thanks interstitial still uses .welcome-title-row/
+   .welcome-seal below). 30vw read as way too large on a real 1080p+ kiosk
+   display (a straight percent-of-viewport size doesn't account for actual
+   screen density) — capped in absolute px instead, with vw only as a
+   fallback for narrow/mobile screens. */
+.welcome-logo {
+  display: block;
+  width: min(18vw, 200px);
+  height: auto;
+  margin: 0 auto 8px;
+}
+/* Smaller mark on the thank-you interstitial — a supporting sign-off, not
+   the hero (THANK YOU is the hero heading there). */
+.welcome-logo-sm {
+  width: min(16vw, 220px);
+  margin: 8px auto;
+}
+
+.welcome-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.welcome-seal {
+  writing-mode: vertical-rl;
+  font-family: "Noto Serif SC", "Songti SC", "PingFang TC", "Microsoft JhengHei", serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: #F7E7C8;
+  background: var(--primary);
+  border: 1px solid rgba(247, 231, 200, 0.6);
+  border-radius: 4px;
+  padding: 6px 5px;
+  transform: rotate(2deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.welcome-screen .survey-thanks-brand {
+  font-family: Georgia, "Songti SC", "Noto Serif SC", "Times New Roman", serif;
+  font-style: italic;
+  font-size: 44px;
+  color: var(--ink);
+  letter-spacing: 1px;
+  margin: 0;
+}
+.welcome-screen .survey-thanks-tagline {
+  font-family: Georgia, "Songti SC", "Noto Serif SC", "Times New Roman", serif;
+  font-size: 17px;
+  margin-top: 4px;
+}
+
+.welcome-chapters { margin-top: 28px; }
+.welcome-screen .survey-thanks-chapter {
+  color: #A9542F;
+  font-size: 13px;
+}
 .chapter-title {
   font-family: "Montserrat", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   font-weight: 800;
@@ -1134,7 +1305,11 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   font-size: 15px;
   margin: 4px 0 0;
 }
-.welcome-screen .btn-start { margin-top: 36px; }
+
+.welcome-screen .btn-start {
+  margin-top: 36px;
+  letter-spacing: 2px;
+}
 
 /* --- idle overlay --- */
 .idle-overlay {

@@ -40,21 +40,68 @@ html, body {
   font-weight: 700;
   text-transform: uppercase;
 }
-/* the brief's "Playlist Script" accent — reserved for this one decorative
-   keepsake moment (the postcard's brand name), not functional UI text;
-   deliberately not uppercased, script faces read poorly in all-caps */
-.card-header-script {
-  top: 3mm;
-  font-family: "Dancing Script", "Montserrat", cursive;
-  font-size: 6mm;
-  letter-spacing: normal;
-  text-transform: none;
+/* OOY CIRCLE emblem in place of the old "Tan Clan Exhibition" script
+   wordmark — print.html only. Height-driven (not width) since the source
+   art is a tall portrait lockup; HEADER_RESERVE_MM in js/print.js reserves
+   the vertical space this needs and must stay in sync with this height. */
+.card-header-logo {
+  position: absolute;
+  top: 2mm;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 15mm;
+  width: auto;
 }
 
-#treeMount {
+#treeMount,
+#surnameMount {
   flex-shrink: 0;
   transform-origin: center center;
 }
+
+/* --- surname card (print-map.html) — see js/surname-card.js --- */
+.surname-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 4mm;
+  box-sizing: border-box;
+  max-width: 110mm;
+}
+.surname-top { margin-bottom: 4mm; }
+.surname-zh {
+  font-family: "Noto Serif SC", "Songti SC", "PingFang TC", "Microsoft JhengHei", serif;
+  font-size: 16mm;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink, #0D2B45);
+}
+.surname-en {
+  margin-top: 1.5mm;
+  font-size: 5mm;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--primary, #E25A2C);
+}
+.surname-divider {
+  width: 16mm;
+  height: 0.5mm;
+  background: var(--gold, #D29A1A);
+  margin-bottom: 3mm;
+}
+.surname-bottom { font-size: 2.8mm; line-height: 1.5; color: var(--ink, #0D2B45); }
+.surname-history { margin: 0 0 2.5mm; }
+.surname-famous { margin: 0; font-style: italic; color: var(--muted, #55708A); }
+
+.surname-resources { margin: 0 0 2.5mm; text-align: left; }
+.surname-resources-intro { margin: 0 0 1.5mm; text-align: center; }
+.surname-resources ul { margin: 0; padding-left: 4mm; }
+.surname-resources li { margin-bottom: 1.5mm; font-size: 2.4mm; line-height: 1.4; }
+.surname-resource-label { font-weight: 700; }
+.surname-resource-url { color: var(--primary, #E25A2C); word-break: break-all; }
+.surname-missing { font-size: 3.2mm; color: var(--muted, #55708A); max-width: 100mm; text-align: center; }
 
 .card-qr {
   position: absolute;

@@ -21,107 +21,121 @@
 
     <!-- 0. Opening screen (language switch lives only in the top-left toggle) -->
     <section class="screen active welcome-screen" data-screen="welcome">
-      <p class="survey-thanks-brand" data-i18n="surveyThanksBrand">OOY CIRCLE</p>
-      <p class="survey-thanks-tagline"><em data-i18n="surveyThanksTagline">Our Roots · Our Nation · Your Journey</em></p>
+      <div class="welcome-inner">
+        <div class="welcome-ornament" aria-hidden="true"><span></span><i></i><span></span></div>
 
-      <div class="welcome-chapters">
-        <p class="survey-thanks-chapter" data-i18n="welcomeChapter1Label">CHAPTER ONE · 2023</p>
-        <p class="chapter-title" data-i18n="welcomeChapter1Title">ENCOUNTER</p>
+        <img class="welcome-logo" src="assets/ooy-logo.webp" alt="OOY CIRCLE — Our Roots, Our Nation, Your Journey">
 
-        <p class="survey-thanks-chapter" data-i18n="welcomeChapter2Label">CHAPTER TWO · 2026</p>
-        <p class="chapter-title" data-i18n="welcomeChapter2Title">DREAMS</p>
+        <div class="welcome-chapters">
+          <p class="survey-thanks-chapter" data-i18n="welcomeChapter1Label">CHAPTER ONE · 2023</p>
+          <p class="chapter-title" data-i18n="welcomeChapter1Title">ENCOUNTER</p>
 
-        <p class="survey-thanks-chapter" data-i18n="surveyThanksChapter">CHAPTER THREE · …</p>
-        <p class="chapter-sub"><em data-i18n="surveyThanksNextChapter">Perhaps you are part of the next chapter.</em></p>
+          <p class="survey-thanks-chapter" data-i18n="welcomeChapter2Label">CHAPTER TWO · 2026</p>
+          <p class="chapter-title" data-i18n="welcomeChapter2Title">DREAMS</p>
+
+          <p class="survey-thanks-chapter" data-i18n="surveyThanksChapter">CHAPTER THREE · …</p>
+          <p class="chapter-sub"><em data-i18n="surveyThanksNextChapter">Perhaps you are part of the next chapter.</em></p>
+        </div>
+
+        <button class="btn-start" id="startBtn" data-i18n="beginJourneyBtn">BEGIN MY JOURNEY</button>
       </div>
-
-      <button class="btn-start" id="startBtn" data-i18n="beginJourneyBtn">BEGIN MY JOURNEY</button>
     </section>
 
     <!-- 0.5 DREAMS 2026 visitor survey (must complete before the family chart) -->
-    <section class="screen" data-screen="survey">
-      <h1 data-i18n="surveyTitle">Visitor Survey</h1>
-      <p class="subtitle" data-i18n="surveySub">A few quick questions before we build your family tree.</p>
-      <div id="surveyForm" class="survey-form"></div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="survey" data-i18n="continueBtn">Continue</button>
+    <section class="screen survey-screen" data-screen="survey">
+      <div class="survey-inner">
+        <h1 data-i18n="surveyTitle">Visitor Survey</h1>
+        <p class="subtitle" data-i18n="surveySub">A few quick questions before we build your family tree.</p>
+        <div id="surveyForm" class="survey-form"></div>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
+          <button class="btn btn-primary" data-next="survey" data-i18n="continueBtn">Continue</button>
+        </div>
       </div>
     </section>
 
     <!-- 0.6 Survey thank-you interstitial -->
-    <section class="screen" data-screen="survey-thanks">
+    <section class="screen welcome-screen" data-screen="survey-thanks">
       <div class="survey-thanks">
+        <div class="welcome-ornament" aria-hidden="true"><span></span><i></i><span></span></div>
+
         <h1 data-i18n="surveyThanksTitle">THANK YOU</h1>
         <p class="survey-thanks-lede"><em data-i18n="surveyThanksLede">Your journey doesn't end here.</em></p>
         <p data-i18n="surveyThanksBody">Together, we discover our roots, strengthen our connections and shape what comes next.</p>
         <p class="survey-thanks-chapter" data-i18n="surveyThanksChapter">CHAPTER THREE · …</p>
         <p><em data-i18n="surveyThanksNextChapter">Perhaps you are part of the next chapter.</em></p>
-        <p class="survey-thanks-brand" data-i18n="surveyThanksBrand">OOY CIRCLE</p>
-        <p class="survey-thanks-tagline"><em data-i18n="surveyThanksTagline">Our Roots · Our Nation · Your Journey</em></p>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-primary" id="surveyThanksContinueBtn" data-i18n="surveyThanksContinueBtn">Continue to your family tree</button>
+
+        <img class="welcome-logo welcome-logo-sm" src="assets/ooy-logo.webp" alt="OOY CIRCLE — Our Roots, Our Nation, Your Journey">
+
+        <div class="nav-buttons">
+          <button class="btn btn-primary btn-uppercase" id="surveyThanksContinueBtn" data-i18n="surveyThanksContinueBtn">CONTINUE MY FAMILY JOURNEY</button>
+        </div>
       </div>
     </section>
 
     <!-- 1. Family chart -->
-    <section class="screen" data-screen="chart">
-      <h1 data-i18n="chartTitle">Build Your Family Tree</h1>
-      <p class="subtitle" data-i18n="chartSub">Answer the questions on the right — your family tree fills in on the left as you go.</p>
-      <div class="chart-layout">
-        <div class="chart-left">
-          <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
-          <div class="preview-tree-wrap" id="chartTreeWrap">
-            <div id="chartTree"></div>
+    <section class="screen chart-screen" data-screen="chart">
+      <div class="chart-inner">
+        <h1 data-i18n="chartTitle">Build Your Family Tree</h1>
+        <p class="subtitle" data-i18n="chartSub">Answer the questions on the right — your family tree fills in on the left as you go.</p>
+        <div class="chart-layout">
+          <div class="chart-left">
+            <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
+            <div class="preview-tree-wrap" id="chartTreeWrap">
+              <div id="chartTree"></div>
+            </div>
           </div>
+          <div class="chart-right" id="chartQuestions"></div>
         </div>
-        <div class="chart-right" id="chartQuestions"></div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-primary" data-next="chart" data-i18n="next">Next</button>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
+          <button class="btn btn-primary" data-next="chart" data-i18n="next">Next</button>
+        </div>
       </div>
     </section>
 
     <!-- 10. Migration path -->
-    <section class="screen" data-screen="migration-map">
-      <h1 data-i18n="migrationMapTitle">Your Migration Path</h1>
-      <p class="subtitle" data-i18n="migrationMapSub">Tracing your journey from your place of origin to Singapore</p>
-      <div id="migrationMap"></div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-        <button class="btn btn-ghost" id="replayMapBtn" data-i18n="replay">Watch again</button>
-        <button class="btn btn-primary" data-next="migration-map" data-i18n="next">Next</button>
+    <section class="screen migration-screen" data-screen="migration-map">
+      <div class="migration-inner">
+        <h1 data-i18n="migrationMapTitle">Your Migration Path</h1>
+        <p class="subtitle" data-i18n="migrationMapSub">Tracing your journey from your place of origin to Singapore</p>
+        <div id="migrationMap"></div>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
+          <button class="btn btn-ghost" id="replayMapBtn" data-i18n="replay">Watch again</button>
+          <button class="btn btn-primary" data-next="migration-map" data-i18n="next">Next</button>
+        </div>
       </div>
     </section>
 
     <!-- 11. Preview -->
-    <section class="screen" data-screen="preview">
-      <h1 data-i18n="previewTitle">Here is your family tree!</h1>
-      <p class="subtitle" data-i18n="previewSub">Check it looks right, then print your keepsake.</p>
-      <div class="preview-layout">
-        <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
-        <div class="preview-tree-wrap">
-          <div id="previewTree"></div>
+    <section class="screen preview-screen" data-screen="preview">
+      <div class="preview-inner">
+        <h1 data-i18n="previewTitle">Here is your family tree!</h1>
+        <p class="subtitle" data-i18n="previewSub">Check it looks right, then print your keepsake.</p>
+        <div class="preview-layout">
+          <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
+          <div class="preview-tree-wrap">
+            <div id="previewTree"></div>
+          </div>
+          <div id="shareBox" class="share-box" style="display:none">
+            <h2 data-i18n="shareTitle">Scan to add photos at home!</h2>
+            <p class="subtitle" data-i18n="shareSub">Scan this with a phone, or visit the link below, to add real photos and enter it for the competition.</p>
+            <div id="shareQr"></div>
+            <p class="share-link" id="shareLinkText"></p>
+            <p class="subtitle" data-i18n="shareCodeLabel">Or type this code:</p>
+            <p class="share-code" id="shareCodeText"></p>
+            <p class="subtitle" id="shareStatus"></p>
+          </div>
         </div>
-        <div id="shareBox" class="share-box" style="display:none">
-          <h2 data-i18n="shareTitle">Scan to add photos at home!</h2>
-          <p class="subtitle" data-i18n="shareSub">Scan this with a phone, or visit the link below, to add real photos and enter it for the competition.</p>
-          <div id="shareQr"></div>
-          <p class="share-link" id="shareLinkText"></p>
-          <p class="subtitle" data-i18n="shareCodeLabel">Or type this code:</p>
-          <p class="share-code" id="shareCodeText"></p>
-          <p class="subtitle" id="shareStatus"></p>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" data-back data-i18n="edit">Edit answers</button>
+          <button class="btn btn-ghost" id="printMapBtn" data-i18n="printMap">Print this map</button>
+          <button class="btn btn-primary" id="printBtn" data-i18n="print">Print my family tree</button>
         </div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" data-back data-i18n="edit">Edit answers</button>
-        <button class="btn btn-ghost" id="printMapBtn" data-i18n="printMap">Print this map</button>
-        <button class="btn btn-primary" id="printBtn" data-i18n="print">Print my family tree</button>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-ghost" id="getLinkBtn" data-i18n="getLinkBtn">Get a link to finish at home</button>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" id="getLinkBtn" data-i18n="getLinkBtn">Get a link to finish at home</button>
+        </div>
       </div>
     </section>
 
@@ -160,6 +174,8 @@
 <script src="js/places.js"></script>
 <script src="js/tree.js"></script>
 <script src="js/photo-capture.js"></script>
+<script src="js/surname-data.js"></script>
+<script src="js/surname-picker.js"></script>
 <script src="js/chart-editor.js"></script>
 <script src="js/migration-theme.js"></script>
 <script src="js/migration-map.js"></script>

@@ -17,23 +17,17 @@ function blankPerson() {
 // strips this key out before writing), only exported to CSV by staff.
 function blankSurvey() {
   return {
-    rating: null,
-    interests: [],
-    interestsOther: "",
-    rootsInterest: null,
-    futurePrograms: [],
-    futureProgramsOther: "",
-    nextChapterSuggestion: "",
     name: "",
     ageGroup: null,
     gender: null,
-    hobbies: "",
+    dreamsAreas: [],
+    dreamsAreasOther: "",
+    futurePrograms: [],
+    futureProgramsOther: "",
+    clanCommunity: "",
     mobile: "",
     email: "",
-    joinCircle: false,
     keepInformed: false,
-    contribute: false,
-    contributeDetails: "",
     pdpaConsent: false,
   };
 }
@@ -41,7 +35,16 @@ function blankSurvey() {
 function blankState() {
   return {
     lang: "en",
-    self: { name: "", job: "", photo: null, children: [] }, // children: self's own children only ({name,job,photo,gender}) — no grandchildren; see js/tree.js's generationRootTier for how "Family Root in Singapore" (Generation 1) is determined
+    // children: self's own children only ({name,job,photo,gender}) — no
+    // grandchildren; see js/tree.js's generationRootTier for how "Family
+    // Root in Singapore" (Generation 1) is determined.
+    // surname/surnameToken: resolved by js/surname-picker.js from the first
+    // word of `name` against js/surname-data.js — surname is the chosen
+    // {en,zh,history,famous} record (or null until resolved/chosen), and
+    // surnameToken is the normalized spelling it was resolved from, used to
+    // detect when `name`'s first word changes and needs re-resolving. Printed
+    // on the "Print this map" card — see js/surname-card.js.
+    self: { name: "", job: "", photo: null, children: [], surname: null, surnameToken: null },
     hasSiblings: null, // true/false
     siblingCount: 0,
     siblings: [], // { name, type, job, photo }

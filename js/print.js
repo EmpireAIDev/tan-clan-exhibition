@@ -18,7 +18,10 @@
 
   const card = document.getElementById("card");
   const PADDING_MM = 6;
-  const HEADER_RESERVE_MM = 8;
+  // Must stay >= the OOY logo's height (css/print.css's .card-header-logo,
+  // currently 15mm tall starting 2mm from the top) plus a little breathing
+  // room, or the family tree below it gets scaled to overlap the logo.
+  const HEADER_RESERVE_MM = 18;
   card.style.width = paper.w + "mm";
   card.style.height = paper.h + "mm";
   card.style.padding = `${PADDING_MM + HEADER_RESERVE_MM}mm ${PADDING_MM}mm ${PADDING_MM}mm`;

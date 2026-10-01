@@ -1,7 +1,10 @@
-// Renders the postcard-sized migration map, auto-scales to fit, prints, then
+// Renders the postcard-sized surname card, auto-scales to fit, prints, then
 // returns to the family tree preview (this is a mid-flow print, not the
 // terminal step — js/print.js's family-tree print still owns clearing the
-// session and returning to the welcome screen).
+// session and returning to the welcome screen). File/element names here
+// still say "map" in a few places (print-map.html/js, #surnameMount's
+// sibling id history) for a minimal diff against the migration-map version
+// this replaced — see js/surname-card.js for what actually renders.
 (function () {
   const data = State.loadForPrint();
   if (!data || !data.self || !data.self.name) {
@@ -25,22 +28,19 @@
   card.style.height = paper.h + "mm";
   card.style.padding = `${PADDING_MM + HEADER_RESERVE_MM}mm ${PADDING_MM}mm ${PADDING_MM}mm`;
 
-  const treeMount = document.getElementById("treeMount");
-  // Compact variant: the full story cards' paragraph text and large
-  // gradient art would become illegible once scaled down to fit a small
-  // physical postcard — see js/migration-map.js's buildCompactStop.
-  renderMigrationMap(treeMount, data, { animated: false, compact: true });
+  const surnameMount = document.getElementById("surnameMount");
+  renderSurnameCard(surnameMount, data);
 
   let printTriggered = false;
   let returned = false;
 
   function fitAndPrint() {
     const cardRect = card.getBoundingClientRect();
-    const treeRect = treeMount.getBoundingClientRect();
+    const mountRect = surnameMount.getBoundingClientRect();
     const availW = cardRect.width - PADDING_MM * 2 * (96 / 25.4);
     const availH = cardRect.height - (PADDING_MM * 2 + HEADER_RESERVE_MM) * (96 / 25.4);
-    const scale = Math.min(availW / treeRect.width, availH / treeRect.height, 1);
-    treeMount.style.transform = `scale(${scale})`;
+    const scale = Math.min(availW / mountRect.width, availH / mountRect.height, 1);
+    surnameMount.style.transform = `scale(${scale})`;
 
     setTimeout(() => {
       if (printTriggered) return;

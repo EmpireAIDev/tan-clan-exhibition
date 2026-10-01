@@ -47,33 +47,6 @@ const SurveyScreen = (function () {
     wrap.appendChild(grid);
   }
 
-  function ratingRow(wrap, getCurrent, onSelect) {
-    const grid = document.createElement("div");
-    grid.className = "count-grid";
-    for (let i = 1; i <= 5; i++) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = String(i);
-      if (getCurrent() === i) btn.classList.add("selected");
-      btn.addEventListener("click", () => {
-        onSelect(i);
-        grid.querySelectorAll("button").forEach((b) => b.classList.remove("selected"));
-        btn.classList.add("selected");
-      });
-      grid.appendChild(btn);
-    }
-    wrap.appendChild(grid);
-    const captions = document.createElement("div");
-    captions.className = "rating-captions";
-    const lo = document.createElement("span");
-    lo.textContent = I18n.t("surveyRatingLow");
-    const hi = document.createElement("span");
-    hi.textContent = I18n.t("surveyRatingHigh");
-    captions.appendChild(lo);
-    captions.appendChild(hi);
-    wrap.appendChild(captions);
-  }
-
   function multiSelectList(wrap, options, selectedArray, getOther, onToggle, onOtherInput) {
     const list = document.createElement("div");
     list.className = "checkbox-list";
@@ -143,37 +116,53 @@ const SurveyScreen = (function () {
     const s = State.data.survey;
     container.innerHTML = "";
 
-    // ---- Section 1 ----
+    // ---- Section 1 — About You ----
     sectionHeading(container, I18n.t("surveySection1"));
 
-    const ratingWrap = fieldWrap(I18n.t("surveyRatingQuestion"));
-    ratingRow(ratingWrap, () => s.rating, (v) => { s.rating = v; State.save(); });
-    container.appendChild(ratingWrap);
+    const nameWrap = fieldWrap(I18n.t("surveyNameLabel"));
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = s.name || "";
+    nameInput.addEventListener("input", () => { s.name = nameInput.value; State.save(); });
+    nameWrap.appendChild(nameInput);
+    container.appendChild(nameWrap);
 
-    const interestsWrap = fieldWrap(I18n.t("surveyInterestsQuestion"), I18n.t("surveySelectAll"));
+    const ageWrap = fieldWrap(I18n.t("surveyAgeGroupLabel"));
+    singleSelectGrid(ageWrap, AGE_GROUPS, () => s.ageGroup, (key) => { s.ageGroup = key; State.save(); });
+    container.appendChild(ageWrap);
+
+    const genderWrap = fieldWrap(I18n.t("surveyGenderLabel"), I18n.t("optional"));
+    singleSelectGrid(genderWrap, GENDERS, () => s.gender, (key) => { s.gender = key; State.save(); });
+    container.appendChild(genderWrap);
+
+    const clanWrap = fieldWrap(I18n.t("surveyClanCommunityLabel"), I18n.t("optional"));
+    const clanInput = document.createElement("input");
+    clanInput.type = "text";
+    clanInput.value = s.clanCommunity || "";
+    clanInput.addEventListener("input", () => { s.clanCommunity = clanInput.value; State.save(); });
+    clanWrap.appendChild(clanInput);
+    container.appendChild(clanWrap);
+
+    // ---- Section 2 — DREAMS Areas ----
+    sectionHeading(container, I18n.t("surveySection2"));
+
+    const dreamsWrap = fieldWrap(I18n.t("surveyDreamsQuestion"), I18n.t("surveySelectAll"));
     multiSelectList(
-      interestsWrap,
-      EXHIBITION_INTERESTS,
-      s.interests,
-      () => s.interestsOther,
+      dreamsWrap,
+      DREAMS_AREAS,
+      s.dreamsAreas,
+      () => s.dreamsAreasOther,
       (key, checked) => {
-        if (checked) s.interests.push(key);
-        else s.interests = s.interests.filter((k) => k !== key);
+        if (checked) s.dreamsAreas.push(key);
+        else s.dreamsAreas = s.dreamsAreas.filter((k) => k !== key);
         State.save();
       },
-      (val) => { s.interestsOther = val; State.save(); }
+      (val) => { s.dreamsAreasOther = val; State.save(); }
     );
-    container.appendChild(interestsWrap);
+    container.appendChild(dreamsWrap);
 
-    const rootsWrap = fieldWrap(I18n.t("surveyRootsQuestion"));
-    singleSelectGrid(rootsWrap, ROOTS_INTEREST_OPTIONS, () => s.rootsInterest, (key) => {
-      s.rootsInterest = key;
-      State.save();
-    });
-    container.appendChild(rootsWrap);
-
-    // ---- Section 2 ----
-    sectionHeading(container, I18n.t("surveySection2"));
+    // ---- Section 3 — What's Next ----
+    sectionHeading(container, I18n.t("surveySection3"));
 
     const futureWrap = fieldWrap(I18n.t("surveyFutureQuestion"), I18n.t("surveySelectAll"));
     multiSelectList(
@@ -190,56 +179,32 @@ const SurveyScreen = (function () {
     );
     container.appendChild(futureWrap);
 
-    const nextChapterWrap = fieldWrap(I18n.t("surveyNextChapterQuestion"), I18n.t("optional"));
-    const nextChapterInput = document.createElement("textarea");
-    nextChapterInput.rows = 3;
-    nextChapterInput.value = s.nextChapterSuggestion || "";
-    nextChapterInput.addEventListener("input", () => {
-      s.nextChapterSuggestion = nextChapterInput.value;
-      State.save();
-    });
-    nextChapterWrap.appendChild(nextChapterInput);
-    container.appendChild(nextChapterWrap);
-
-    // ---- Section 3 ----
-    sectionHeading(container, I18n.t("surveySection3"));
-
-    const nameWrap = fieldWrap(I18n.t("surveyNameLabel"));
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.value = s.name || "";
-    nameInput.addEventListener("input", () => { s.name = nameInput.value; State.save(); });
-    nameWrap.appendChild(nameInput);
-    container.appendChild(nameWrap);
-
-    const ageWrap = fieldWrap(I18n.t("surveyAgeGroupLabel"));
-    singleSelectGrid(ageWrap, AGE_GROUPS, () => s.ageGroup, (key) => { s.ageGroup = key; State.save(); });
-    container.appendChild(ageWrap);
-
-    const genderWrap = fieldWrap(I18n.t("surveyGenderLabel"));
-    singleSelectGrid(genderWrap, GENDERS, () => s.gender, (key) => { s.gender = key; State.save(); });
-    container.appendChild(genderWrap);
-
-    const hobbiesWrap = fieldWrap(I18n.t("surveyHobbiesLabel"));
-    const hobbiesInput = document.createElement("input");
-    hobbiesInput.type = "text";
-    hobbiesInput.value = s.hobbies || "";
-    hobbiesInput.addEventListener("input", () => { s.hobbies = hobbiesInput.value; State.save(); });
-    hobbiesWrap.appendChild(hobbiesInput);
-    container.appendChild(hobbiesWrap);
+    // ---- Section 4 — Contact & Lucky Draw ----
+    sectionHeading(container, I18n.t("surveySection4"));
 
     const contactWrap = document.createElement("div");
     contactWrap.id = "surveyContactFields";
 
     const mobileWrap = fieldWrap(I18n.t("surveyMobileLabel"));
+    mobileWrap.id = "surveyMobileField";
     const mobileInput = document.createElement("input");
     mobileInput.type = "tel";
+    mobileInput.inputMode = "numeric";
+    mobileInput.maxLength = 8;
+    mobileInput.placeholder = "8123 4567";
+    mobileInput.required = true;
     mobileInput.value = s.mobile || "";
-    mobileInput.addEventListener("input", () => { s.mobile = mobileInput.value; State.save(); });
+    mobileInput.addEventListener("input", () => {
+      // Singapore mobile numbers are 8 digits — strip anything else as the
+      // visitor types rather than rejecting the whole value on submit.
+      mobileInput.value = mobileInput.value.replace(/\D/g, "").slice(0, 8);
+      s.mobile = mobileInput.value;
+      State.save();
+    });
     mobileWrap.appendChild(mobileInput);
     contactWrap.appendChild(mobileWrap);
 
-    const emailWrap = fieldWrap(I18n.t("surveyEmailLabel"));
+    const emailWrap = fieldWrap(I18n.t("surveyEmailLabel"), I18n.t("optional"));
     const emailInput = document.createElement("input");
     emailInput.type = "email";
     emailInput.value = s.email || "";
@@ -254,22 +219,6 @@ const SurveyScreen = (function () {
 
     container.appendChild(contactWrap);
 
-    // ---- Section 4 ----
-    sectionHeading(container, I18n.t("surveySection4"));
-    const section4Sub = document.createElement("p");
-    section4Sub.className = "survey-hint";
-    section4Sub.textContent = I18n.t("surveySection4Sub");
-    container.appendChild(section4Sub);
-
-    toggleCard(
-      container,
-      "joinCircleCard",
-      I18n.t("surveyJoinTitle"),
-      I18n.t("surveyJoinDesc"),
-      s.joinCircle,
-      (checked) => { s.joinCircle = checked; State.save(); }
-    );
-
     toggleCard(
       container,
       "keepInformedCard",
@@ -279,34 +228,7 @@ const SurveyScreen = (function () {
       (checked) => { s.keepInformed = checked; State.save(); }
     );
 
-    const contributeWrap = document.createElement("div");
-    const contributeDetailsWrap = fieldWrap(I18n.t("surveyContributeDetailsLabel"), I18n.t("optional"));
-    const contributeDetailsInput = document.createElement("textarea");
-    contributeDetailsInput.rows = 2;
-    contributeDetailsInput.value = s.contributeDetails || "";
-    contributeDetailsInput.addEventListener("input", () => {
-      s.contributeDetails = contributeDetailsInput.value;
-      State.save();
-    });
-    contributeDetailsWrap.appendChild(contributeDetailsInput);
-    contributeDetailsWrap.style.display = s.contribute ? "block" : "none";
-
-    toggleCard(
-      container,
-      "contributeCard",
-      I18n.t("surveyContributeTitle"),
-      I18n.t("surveyContributeDesc"),
-      s.contribute,
-      (checked) => {
-        s.contribute = checked;
-        State.save();
-        contributeDetailsWrap.style.display = checked ? "block" : "none";
-      }
-    );
-    contributeWrap.appendChild(contributeDetailsWrap);
-    container.appendChild(contributeWrap);
-
-    // ---- Section 5 ----
+    // ---- Section 5 — Personal Data / PDPA ----
     sectionHeading(container, I18n.t("surveySection5"));
     const notice = document.createElement("div");
     notice.className = "pdpa-notice";
@@ -340,12 +262,12 @@ const SurveyScreen = (function () {
 
   function validate() {
     const s = State.data.survey;
-    if (!s.pdpaConsent) {
-      shakeField(document.getElementById("pdpaConsentCard"));
+    if (!/^\d{8}$/.test(s.mobile.trim())) {
+      shakeField(document.getElementById("surveyMobileField"));
       return false;
     }
-    if ((s.joinCircle || s.keepInformed) && !s.mobile.trim() && !s.email.trim()) {
-      shakeField(document.getElementById("surveyContactFields"));
+    if (!s.pdpaConsent) {
+      shakeField(document.getElementById("pdpaConsentCard"));
       return false;
     }
     return true;
@@ -373,24 +295,20 @@ const SurveyScreen = (function () {
   function buildCsvRow() {
     const s = State.data.survey;
     const now = new Date().toISOString();
+    const hasContact = Boolean(s.mobile.trim() || s.email.trim());
     return [
       now,
       SURVEY_EVENT_SOURCE,
-      s.rating || "",
-      formatMultiEn(s.interests, EXHIBITION_INTERESTS, s.interestsOther),
-      labelForEn(ROOTS_INTEREST_OPTIONS, s.rootsInterest),
-      formatMultiEn(s.futurePrograms, FUTURE_ACTIVITIES, s.futureProgramsOther),
+      s.name || "",
       labelForEn(AGE_GROUPS, s.ageGroup),
       labelForEn(GENDERS, s.gender),
-      s.hobbies || "",
-      s.name || "",
+      formatMultiEn(s.dreamsAreas, DREAMS_AREAS, s.dreamsAreasOther),
+      formatMultiEn(s.futurePrograms, FUTURE_ACTIVITIES, s.futureProgramsOther),
+      s.clanCommunity || "",
       s.mobile || "",
       s.email || "",
-      s.joinCircle ? "Yes" : "No",
+      hasContact ? "Yes" : "No",
       s.keepInformed ? "Yes" : "No",
-      s.contribute ? "Yes" : "No",
-      s.contributeDetails || "",
-      s.nextChapterSuggestion || "",
       "Yes",
       now,
       SURVEY_CONSENT_VERSION,
