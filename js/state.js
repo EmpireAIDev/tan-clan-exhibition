@@ -1,11 +1,16 @@
 // Central visitor data model + persistence helpers.
 const STORAGE_KEY = "tanclan_visitor";
-const SETTINGS_KEY = "tanclan_settings";
 
-const PAPER_SIZES = {
-  a6: { labelKey: "A6 Postcard (148 x 100mm)", w: 148, h: 100 },
-  photo4x6: { labelKey: "4x6\" Photo (152.4 x 101.6mm)", w: 152.4, h: 101.6 },
-  a5: { labelKey: "A5 (210 x 148mm)", w: 210, h: 148 },
+// The kiosk prints on A5 only. Every print dimension (millimetres) lives here
+// so js/print.js, js/print-map.js and the tests share one source of truth;
+// css/print.css repeats the logo/QR/caption numbers and must be kept in step
+// (each is marked there).
+const PRINT_LAYOUT = {
+  w: 210,
+  h: 148,
+  pad: 8.5, // blank margin round the card
+  gap: 2, // clear space kept between the tree and the logo / QR / caption
+  textHeaderReserve: 11.5, // top band for the plain text header (surname card)
 };
 
 function blankPerson() {
@@ -92,23 +97,6 @@ const State = {
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
       return null;
-    }
-  },
-
-  getSettings() {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY);
-      return raw ? JSON.parse(raw) : { paperSize: "a6" };
-    } catch (e) {
-      return { paperSize: "a6" };
-    }
-  },
-
-  saveSettings(settings) {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-      /* ignore */
     }
   },
 };

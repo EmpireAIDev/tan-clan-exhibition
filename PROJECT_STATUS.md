@@ -12,7 +12,7 @@ short DREAMS 2026 / OOY CIRCLE feedback survey, then a child builds a
 self + siblings) on an exhibition laptop, watches an animated map of the
 family's migration to Singapore, and prints a postcard-sized keepsake. A QR
 code lets the family continue at home (add real photos, fill in gaps) and
-submit for a competition. Staff can review all submissions and print any of
+enter the Lucky Draw. Staff can review all submissions and print any of
 them via a local-only admin tool.
 
 **Hard requirements that shaped every decision below:**
@@ -119,7 +119,7 @@ repos; it went offline once already when the repo was briefly made private.
    `edit/`.
 7. **Take-home editor** (`edit/`) — loads a submission by ID from the URL
    (`?id=...`), lets the family fix names/jobs, upload real photos, and
-   submit for the competition. Also the *only* place the 5 fixed
+   enter the Lucky Draw. Also the *only* place the 5 fixed
    **intergenerational dialogue questions** (`js/dialogue-questions.js`,
    e.g. "What was Grandpa's first job? → Ask Grandma") are shown and
    answered — deliberately never surfaced during the kiosk chart step.
@@ -141,7 +141,7 @@ repos; it went offline once already when the repo was briefly made private.
 
 | File | Purpose |
 |---|---|
-| `js/state.js` | Central data model (`State.data`) + localStorage persistence + `PAPER_SIZES` |
+| `js/state.js` | Central data model (`State.data`) + localStorage persistence + `PRINT_LAYOUT` (the single A5 print layout) |
 | `js/tree.js` | Read-only tree renderer + SVG connector lines — reused everywhere (preview, print, edit, admin) |
 | `js/chart-editor.js` | Right-panel question editor for the kiosk chart step — left-panel live preview lives in `js/flow.js`'s `renderChartLeft` |
 | `js/dialogue-questions.js` | The 5 fixed intergenerational dialogue questions (en/zh) — used by `edit/app.js` and `admin/main.js`, never by the kiosk |

@@ -21,8 +21,18 @@ const SurnamePicker = (function () {
     return trimmed.split(/\s+/)[0];
   }
 
+  // Display-only override: the CSV's primary English spelling is the
+  // Mandarin pinyin ("Chen"), but this exhibition is for the Pek Sek Tan
+  // Clan Association, who go by the Hokkien romanization "Tan" (already
+  // listed among 陈's own spelling variants — see js/surname-data.js). Data
+  // untouched; only what's shown to the visitor changes.
+  function surnameDisplayEn(rec) {
+    if (rec.en === "Chen" && rec.zh === "陈") return "Tan";
+    return rec.en;
+  }
+
   function recordLabel(rec) {
-    return rec.zh + "  " + rec.en;
+    return rec.zh + "  " + surnameDisplayEn(rec);
   }
 
   function toSurnameValue(rec) {

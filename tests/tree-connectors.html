@@ -1,0 +1,226 @@
+<!doctype html>
+<!--
+  Browser test for js/tree.js's connector lines. Open this file (or serve the
+  project and visit /tests/tree-connectors.html): every case renders a real
+  family tree and then checks, in on-screen pixels, that
+
+    1. each parent row has a trunk starting at the row's bottom-centre,
+    2. every child card has a drop ending exactly on its top-centre,
+    3. all connector endpoints stay inside the tree (nothing drifts off),
+    4. self -> children is connected from self's card only (not siblings),
+
+  at several scales (A6 = 1, A5 = ~1.42, a shrunk-to-fit 0.55) and with the
+  scale applied both BEFORE and AFTER drawing, since print.js scales the tree
+  after tree.js has drawn it (and the bug this guards against was lines that
+  only lined up at scale 1). A summary line "RESULT: PASS|FAIL" is written
+  to #summary for automated readers.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>tree connector tests</title>
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+  html, body { height: auto; overflow: auto; background: #fff; }
+  body { padding: 16px; font-family: monospace; }
+  .case { margin: 0 0 4px; }
+  .pass { color: #1a7f37; }
+  .fail { color: #c62828; font-weight: 700; }
+  #stage { position: absolute; left: 0; top: 0; width: 1800px; visibility: hidden; }
+  #summary { font-size: 18px; font-weight: 700; margin: 12px 0; }
+</style>
+</head>
+<body>
+<h3>tree.js connector tests</h3>
+<div id="summary">RESULT: RUNNING</div>
+<div id="log"></div>
+<div id="stage"></div>
+
+<script>
+  // Determinism: background/hidden tabs pause requestAnimationFrame, which
+  // would make results depend on whether the tab happens to be visible.
+  window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 16);
+</script>
+<script>
+// Always test the current code: cache-bust the scripts under test (a stale cached
+// tree.js would silently test the wrong thing), then run.
+async function loadScripts() {
+  for (const f of ["i18n", "state", "tree"]) {
+    await new Promise((res, rej) => {
+      const el = document.createElement("script");
+      el.src = "../js/" + f + ".js?cb=" + Date.now();
+      el.onload = res; el.onerror = rej;
+      document.head.appendChild(el);
+    });
+  }
+}
+</script>
+<script>
+const P = (n, j) => ({ name: n, job: j || "", photo: null });
+const sib = (n, type) => ({ ...P(n), type });
+const kid = (n, g) => ({ ...P(n), gender: g });
+
+const FIXTURES = {
+  "parents + self": {
+    self: { ...P("Self"), children: [] },
+    father: P("Father"), mother: P("Mother"), siblings: [],
+  },
+  "grandparents + 2 siblings + 1 child": {
+    self: { ...P("Self", "Engineer"), children: [kid("Kid One", "son")] },
+    father: P("Father", "Teacher"), mother: P("Mother"),
+    siblings: [sib("Older Bro", "olderBrother"), sib("Younger Sis", "youngerSister")],
+    knowGrandparents: true, grandfather: P("Grandpa"), grandmother: P("Grandma"),
+  },
+  "full: great-grandparents, 4 siblings, 3 children": {
+    self: { ...P("Tan Wei Ming", "Engineer"), children: [kid("Kid One", "son"), kid("Kid Two", "daughter"), kid("Kid Three", "son")] },
+    father: P("Father Tan", "Teacher"), mother: P("Mother Lim"),
+    siblings: [sib("Older Bro", "olderBrother"), sib("Older Sis", "olderSister"), sib("Younger Bro", "youngerBrother"), sib("Younger Sis", "youngerSister")],
+    knowGrandparents: true, grandfather: P("Grandpa"), grandmother: P("Grandma"),
+    knowGreatGrandparents: true, greatGrandfather: P("GreatGrandpa"), greatGrandmother: P("GreatGrandma"),
+  },
+  "self beside a sibling with one centred child (was a diagonal line)": {
+    self: { ...P("lo"), children: [kid("123123", "son")] },
+    father: P("qwe"), mother: P("qweqw"), siblings: [sib("?", "youngerBrother")],
+    knowGrandparents: true, grandfather: P("qwe"), grandmother: P("qwe"),
+  },
+  "long names + jobs (uneven card heights)": {
+    self: { ...P("Alexandria Montgomery-Tan", "Senior Marine Biologist"), children: [kid("Bartholomew", "son"), kid("Evangeline Rose", "daughter")] },
+    father: P("Christopher Tan Boon Keng", "Retired Civil Servant"), mother: P("Mary"),
+    siblings: [sib("Jo", "olderSister"), sib("Maximilian Lee", "youngerBrother")],
+    knowGrandparents: true, grandfather: P("Tan Ah Kow", "Fisherman"), grandmother: P("Lim"),
+  },
+  "6 children (wide row)": {
+    self: { ...P("Self"), children: ["A", "B", "C", "D", "E", "F"].map((n) => kid("Child " + n, "son")) },
+    father: P("Father"), mother: P("Mother"), siblings: [],
+  },
+};
+
+const SCALES = [0.55, 1, 1.42];
+const TOL = 0.75; // on-screen px
+
+function applyScale(mount, s) { mount.style.transform = `scale(${s})`; mount.style.transformOrigin = "top left"; }
+// rAF with a timer fallback so the suite still finishes if the tab is hidden
+// (browsers pause rAF in background tabs).
+const nextFrame = () => new Promise((r) => { requestAnimationFrame(() => r()); setTimeout(r, 60); });
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Independent oracle: on-screen position of a layout-space point of the tree.
+function toScreen(el, x, y) {
+  const r = el.getBoundingClientRect();
+  const sx = r.width / el.offsetWidth, sy = r.height / el.offsetHeight;
+  return { x: r.left + x * sx, y: r.top + y * sy };
+}
+
+function lineEnds(el) {
+  return [...el.querySelectorAll("svg.connectors line")].map((l) => ({
+    a: toScreen(el, +l.getAttribute("x1"), +l.getAttribute("y1")),
+    b: toScreen(el, +l.getAttribute("x2"), +l.getAttribute("y2")),
+  }));
+}
+
+const near = (p, q) => Math.abs(p.x - q.x) <= TOL && Math.abs(p.y - q.y) <= TOL;
+const hasEnd = (lines, pt, which) => lines.some((l) => (which ? near(l[which], pt) : near(l.a, pt) || near(l.b, pt)));
+
+function check(el, scale) {
+  const failures = [];
+  const lines = lineEnds(el);
+  if (!lines.length) failures.push("no connector lines were drawn");
+  lines.forEach((l, i) => {
+    if (Math.abs(l.a.x - l.b.x) > TOL && Math.abs(l.a.y - l.b.y) > TOL) failures.push("line " + i + " is diagonal");
+  });
+
+  const rows = [...el.querySelectorAll(":scope > .gen")];
+  const selfKidsRow = rows.find((r) => r.classList.contains("gen-self-children"));
+  const genRows = rows.filter((r) => r !== selfKidsRow);
+  const center = (r) => ({ x: (r.left + r.right) / 2 });
+
+  function expectLink(parentNode, childPersons, label) {
+    const pr = parentNode.getBoundingClientRect();
+    const trunkStart = { x: (pr.left + pr.right) / 2, y: pr.bottom };
+    if (!hasEnd(lines, trunkStart, "a")) failures.push(`${label}: no trunk starts at parent bottom-centre`);
+    const topY = Math.min(...childPersons.map((c) => c.getBoundingClientRect().top));
+    // the horizontal bar must join the trunk to every child column
+    const midY = (trunkStart.y + topY) / 2;
+    const xs = [trunkStart.x, ...childPersons.map((c) => { const r = c.getBoundingClientRect(); return (r.left + r.right) / 2; })];
+    const need = { l: Math.min(...xs), r: Math.max(...xs) };
+    if (need.r - need.l > TOL) {
+      const bars = lines.filter((l) => Math.abs(l.a.y - midY) <= TOL && Math.abs(l.b.y - midY) <= TOL);
+      const covered = bars.some((l) => Math.min(l.a.x, l.b.x) <= need.l + TOL && Math.max(l.a.x, l.b.x) >= need.r - TOL);
+      if (!covered) failures.push(label + ": no single bar joins the trunk to every child");
+    }
+    childPersons.forEach((c) => {
+      const cr = c.getBoundingClientRect();
+      const dropEnd = { x: (cr.left + cr.right) / 2, y: topY };
+      // a drop must end on the child's column, at the top edge of the row
+      if (!hasEnd(lines, dropEnd, "b")) failures.push(`${label}: drop does not reach top-centre of "${c.querySelector(".person-name").textContent}"`);
+      if (Math.abs(cr.top - topY) > 1.5 * Math.max(1, scale)) {
+        // cards in a row may differ in height but share a top edge
+        failures.push(`${label}: child "${c.querySelector(".person-name").textContent}" top differs from its row`);
+      }
+    });
+  }
+
+  for (let i = 0; i < genRows.length - 1; i++) {
+    expectLink(genRows[i], [...genRows[i + 1].querySelectorAll(".person")], `row ${i} -> row ${i + 1}`);
+  }
+  if (selfKidsRow) {
+    const selfCard = el.querySelector('.gen-children [data-role="self"]');
+    expectLink(selfCard, [...selfKidsRow.querySelectorAll(".person")], "self -> children");
+    // siblings must NOT have trunks into the children row
+    el.querySelectorAll(".gen-children .person:not([data-role='self'])").forEach((p) => {
+      const pr = p.getBoundingClientRect();
+      const bogus = { x: (pr.left + pr.right) / 2, y: pr.bottom };
+      if (hasEnd(lines, bogus, "a") && !genRows.includes(p.parentElement)) failures.push("a sibling has a connector into self's children");
+    });
+  }
+
+  // nothing drifts outside the tree box (with a little slack for line width)
+  const er = el.getBoundingClientRect();
+  const slack = 3 * scale;
+  lines.forEach((l, i) => {
+    [l.a, l.b].forEach((p) => {
+      if (p.x < er.left - slack || p.x > er.right + slack || p.y < er.top - slack || p.y > er.bottom + slack) {
+        failures.push(`line ${i} endpoint (${p.x.toFixed(1)}, ${p.y.toFixed(1)}) is outside the tree box`);
+      }
+    });
+  });
+  return failures;
+}
+
+async function run() {
+  const stage = document.getElementById("stage");
+  const log = document.getElementById("log");
+  let total = 0, bad = 0;
+
+  for (const [name, fixture] of Object.entries(FIXTURES)) {
+    for (const scale of SCALES) {
+      for (const order of ["scale-then-draw", "draw-then-scale"]) {
+        stage.innerHTML = "";
+        const mount = document.createElement("div");
+        mount.style.display = "inline-block";
+        stage.appendChild(mount);
+        stage.style.visibility = "hidden";
+        if (order === "scale-then-draw") applyScale(mount, scale);
+        const el = renderFamilyTree(mount, JSON.parse(JSON.stringify(fixture)), { maxGeneration: 4 });
+        await nextFrame(); await nextFrame();
+        if (order === "draw-then-scale") { applyScale(mount, scale); await nextFrame(); await nextFrame(); }
+        await wait(30);
+
+        const failures = check(el, scale);
+        total++;
+        const row = document.createElement("div");
+        row.className = "case " + (failures.length ? "fail" : "pass");
+        row.textContent = `${failures.length ? "FAIL" : "PASS"}  ${name}  | scale ${scale} | ${order}` +
+          (failures.length ? "  -> " + failures.slice(0, 3).join(" ; ") : "");
+        log.appendChild(row);
+        if (failures.length) bad++;
+      }
+    }
+  }
+  stage.innerHTML = "";
+  document.getElementById("summary").textContent = `RESULT: ${bad ? "FAIL" : "PASS"} (${total - bad}/${total} cases)`;
+}
+loadScripts().then(run);
+</script>
+</body>
+</html>

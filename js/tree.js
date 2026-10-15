@@ -252,65 +252,100 @@ function drawConnectors(container, rows, extra) {
   svg.style.overflow = "visible";
   svg.style.pointerEvents = "none";
 
+  // Measure the cards in the tree's own coordinate space. print.js scales the
+  // tree to fit the card (and print preview scales the page on top of that);
+  // measuring post-transform rects and then drawing inside that same
+  // transform scaled the lines twice (~2x too wide and off-centre on A5).
+  // Transforms never affect layout, so we switch every ancestor transform
+  // off for the duration of the (synchronous, never-painted) measurement:
+  // the rects are then exact fractional layout positions. Whole-pixel
+  // offsetLeft/Width were not used because their rounding shows up as ~1px
+  // misalignment once the print scale is applied.
+  const savedTransforms = [];
+  for (let a = container.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+    if (getComputedStyle(a).transform !== "none") {
+      savedTransforms.push([a, a.style.transform]);
+      a.style.transform = "none";
+    }
+  }
   const containerRect = container.getBoundingClientRect();
+  // What is left (browser page zoom, if any) is a uniform ratio between
+  // CSS px and rect px; snap to exactly 1 when it is just rounding noise.
+  const ratio = containerRect.width / (container.offsetWidth || 1) || 1;
+  const z = Math.abs(ratio - 1) < 0.01 ? 1 : ratio;
+  function localRect(node) {
+    const r = node.getBoundingClientRect();
+    return {
+      left: (r.left - containerRect.left) / z,
+      right: (r.right - containerRect.left) / z,
+      top: (r.top - containerRect.top) / z,
+      bottom: (r.bottom - containerRect.top) / z,
+    };
+  }
 
-  function connect(fromRect, toChildren) {
+  function connect(fromNode, toChildren) {
     if (!toChildren.length) return;
-    const fromCenterX = fromRect.left + fromRect.width / 2 - containerRect.left;
-    const fromY = fromRect.bottom - containerRect.top;
-    const centers = toChildren.map((c) => {
-      const r = c.getBoundingClientRect();
-      return r.left + r.width / 2 - containerRect.left;
-    });
-    const toY = Math.min(...toChildren.map((c) => c.getBoundingClientRect().top)) - containerRect.top;
+    const from = localRect(fromNode);
+    const kids = toChildren.map(localRect);
+    const fromCenterX = (from.left + from.right) / 2;
+    const fromY = from.bottom;
+    const centers = kids.map((r) => (r.left + r.right) / 2);
+    const toY = Math.min(...kids.map((r) => r.top));
     const midY = (fromY + toY) / 2;
 
-    const trunk = document.createElementNS(svgNS, "line");
-    trunk.setAttribute("x1", fromCenterX);
-    trunk.setAttribute("y1", fromY);
-    trunk.setAttribute("x2", fromCenterX);
-    trunk.setAttribute("y2", midY);
-    trunk.setAttribute("class", "connector-line");
-    svg.appendChild(trunk);
-
-    if (centers.length === 1) {
-      const drop = document.createElementNS(svgNS, "line");
-      drop.setAttribute("x1", fromCenterX);
-      drop.setAttribute("y1", midY);
-      drop.setAttribute("x2", centers[0]);
-      drop.setAttribute("y2", toY);
-      drop.setAttribute("class", "connector-line");
-      svg.appendChild(drop);
-    } else {
-      const bar = document.createElementNS(svgNS, "line");
-      bar.setAttribute("x1", Math.min(...centers));
-      bar.setAttribute("y1", midY);
-      bar.setAttribute("x2", Math.max(...centers));
-      bar.setAttribute("y2", midY);
-      bar.setAttribute("class", "connector-line");
-      svg.appendChild(bar);
-      centers.forEach((cx) => {
-        const drop = document.createElementNS(svgNS, "line");
-        drop.setAttribute("x1", cx);
-        drop.setAttribute("y1", midY);
-        drop.setAttribute("x2", cx);
-        drop.setAttribute("y2", toY);
-        drop.setAttribute("class", "connector-line");
-        svg.appendChild(drop);
-      });
+    function seg(x1, y1, x2, y2) {
+      const line = document.createElementNS(svgNS, "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("class", "connector-line");
+      svg.appendChild(line);
     }
+
+    // Always axis-aligned elbows: trunk down from the parent, one
+    // horizontal bar at midY that spans the trunk AND every child centre
+    // (so it still joins up when the parent is off to one side of its
+    // children — e.g. self beside a sibling with a single, centred child),
+    // then a vertical drop onto each child. A single child directly
+    // below its parent has no bar at all (zero width).
+    seg(fromCenterX, fromY, fromCenterX, midY);
+    const barLeft = Math.min(fromCenterX, ...centers);
+    const barRight = Math.max(fromCenterX, ...centers);
+    if (barRight - barLeft > 0.01) seg(barLeft, midY, barRight, midY);
+    centers.forEach((cx) => seg(cx, midY, cx, toY));
   }
 
   for (let i = 0; i < rows.length - 1; i++) {
-    connect(rows[i].getBoundingClientRect(), Array.from(rows[i + 1].querySelectorAll(".person")));
+    connect(rows[i], Array.from(rows[i + 1].querySelectorAll(".person")));
   }
 
   if (extra && extra.fromCard && extra.toRow) {
-    connect(extra.fromCard.getBoundingClientRect(), Array.from(extra.toRow.querySelectorAll(".person")));
+    connect(extra.fromCard, Array.from(extra.toRow.querySelectorAll(".person")));
   }
 
+  savedTransforms.forEach(([el, t]) => { el.style.transform = t; });
   container.style.position = "relative";
   container.insertBefore(svg, container.firstChild);
+}
+
+// Trees currently on the page, so one pair of global print listeners can
+// redraw them all (print layout can differ from the screen layout the lines
+// were last drawn for) without leaking a listener per render.
+const liveTrees = new Set();
+function redrawLiveTrees() {
+  liveTrees.forEach((redraw) => redraw());
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeprint", redrawLiveTrees);
+  window.addEventListener("afterprint", redrawLiveTrees);
+  if (window.matchMedia) {
+    const mq = window.matchMedia("print");
+    if (mq.addEventListener) mq.addEventListener("change", redrawLiveTrees);
+  }
+  // Web fonts swapping in re-flows every card; redraw whenever any finish.
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", redrawLiveTrees);
+  window.addEventListener("load", redrawLiveTrees);
 }
 
 function renderFamilyTree(container, data, opts) {
@@ -331,13 +366,34 @@ function renderFamilyTree(container, data, opts) {
   const selfCard = el.querySelector('.gen-children [data-role="self"]');
 
   container.appendChild(el);
-  // connectors need layout to exist first
-  requestAnimationFrame(() => {
-    // Exclude the self-children row from the generic row-to-row pass (it
-    // would wrongly include siblings) — connect it separately from self's
-    // card only, via `extra`.
-    const rowsForGenericPass = selfChildrenRow ? rows.slice(0, -1) : rows;
-    drawConnectors(el, rowsForGenericPass, selfChildrenRow ? { fromCard: selfCard, toRow: selfChildrenRow } : null);
-  });
+
+  // Exclude the self-children row from the generic row-to-row pass (it
+  // would wrongly include siblings) — connect it separately from self's
+  // card only, via `extra`.
+  const rowsForGenericPass = selfChildrenRow ? rows.slice(0, -1) : rows;
+  const extra = selfChildrenRow ? { fromCard: selfCard, toRow: selfChildrenRow } : null;
+  function redraw() {
+    if (!el.isConnected) {
+      liveTrees.delete(redraw);
+      return;
+    }
+    drawConnectors(el, rowsForGenericPass, extra);
+    el.dispatchEvent(new CustomEvent("connectors-drawn"));
+  }
+  el.redrawConnectors = redraw;
+  liveTrees.add(redraw);
+
+  // Connectors depend on final layout, which keeps changing after the first
+  // paint (web fonts swapping in re-wraps names; photos; the viewport) — so
+  // draw now, again next frame, and again whenever any card or the tree
+  // itself changes size, rather than trusting one early measurement.
+  redraw();
+  requestAnimationFrame(redraw);
+  if (typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver(redraw);
+    ro.observe(el);
+    el.querySelectorAll(".person").forEach((p) => ro.observe(p));
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
   return el;
 }

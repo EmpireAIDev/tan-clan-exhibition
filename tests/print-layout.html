@@ -1,0 +1,253 @@
+<!doctype html>
+<!--
+  Browser test for the real print pages (print.html and print-map.html) at A6
+  and A5. Each case loads the actual page in an iframe (print/timers/rAF are
+  shimmed so it can be inspected instead of printing and navigating away),
+  then checks, in on-screen pixels:
+
+    print.html (family tree)
+      - connector lines are exact: trunk from each parent row's bottom-centre,
+        a drop onto every child's top-centre, all axis-aligned (this is the
+        "branch not centred / not connected" bug seen in print preview)
+      - the tree FILLS the area between the logo and the footer band
+        (>= 90% of the available width or height) — the layout is authored at
+        A6 so on A5 it must scale up, not sit small in a sea of white
+      - nothing overlaps the logo, QR or caption, and nothing leaves the card
+
+    print-map.html (surname card)
+      - fills the available area the same way and stays inside the card
+
+  "RESULT: PASS|FAIL" is written to #summary.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>print layout tests</title>
+<style>
+  body { font-family: monospace; padding: 16px; }
+  .pass { color: #1a7f37; } .fail { color: #c62828; font-weight: 700; }
+  #summary { font-size: 18px; font-weight: 700; margin: 12px 0; }
+  iframe { position: absolute; left: -4000px; top: 0; width: 1400px; height: 1000px; border: 0; }
+</style>
+</head>
+<body>
+<h3>print layout tests</h3>
+<div id="summary">RESULT: RUNNING</div>
+<div id="log"></div>
+<iframe id="f"></iframe>
+
+<script>
+const P = (n, j) => ({ name: n, job: j || "", photo: null });
+const sib = (n, type) => ({ ...P(n), type });
+const kid = (n, g) => ({ ...P(n), gender: g });
+
+const SURNAME = {
+  en: "Chen", zh: "陈", famous: "Tan Kah Kee - businessman and philanthropist.", famousZh: "",
+  history: "Descendants of legendary Emperor Shun, the Chen surname originated when Zhou King Wu Wang granted the region of Chen to Gui Man around 1046 BC after overthrowing the Shang dynasty. His descendants adopted the surname Chen.",
+  historyZh: "",
+};
+
+const TREES = {
+  "user's family (self beside sibling, one child)": {
+    self: { ...P("lo"), children: [kid("123123", "son")], surname: null, surnameToken: null },
+    father: P("qwe"), mother: P("qweqw"), siblings: [sib("?", "youngerBrother")], hasSiblings: true,
+    knowGrandparents: true, grandfather: P("qwe"), grandmother: P("qwe"),
+  },
+  "parents + self": {
+    self: { ...P("Self"), children: [], surname: null, surnameToken: null },
+    father: P("Father"), mother: P("Mother"), siblings: [],
+  },
+  "full: 4 generations up, 4 siblings, 3 children": {
+    self: { ...P("Tan Wei Ming", "Engineer"), children: [kid("Kid One", "son"), kid("Kid Two", "daughter"), kid("Kid Three", "son")], surname: null, surnameToken: null },
+    father: P("Father Tan", "Teacher"), mother: P("Mother Lim"),
+    siblings: [sib("Older Bro", "olderBrother"), sib("Older Sis", "olderSister"), sib("Younger Bro", "youngerBrother"), sib("Younger Sis", "youngerSister")],
+    hasSiblings: true,
+    knowGrandparents: true, grandfather: P("Grandpa"), grandmother: P("Grandma"),
+    knowGreatGrandparents: true, greatGrandfather: P("GreatGrandpa"), greatGrandmother: P("GreatGrandma"),
+  },
+};
+
+const TOL = 1; // px
+const PX_PER_MM = 96 / 25.4;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Load a real print page with the environment made inspectable & deterministic.
+async function loadPrintPage(page, data) {
+  localStorage.setItem("tanclan_visitor", JSON.stringify(data));
+  const cb = Date.now() + Math.random();
+  let html = await (await fetch("/" + page + "?x=" + cb, { cache: "no-store" })).text();
+  // cache-bust everything the page loads so we test current code
+  html = html.replace(/(src|href)="(js|css|assets)\/([^"]+)"/g, (m, a, d, p) => `${a}="/${d}/${p}${p.includes("?") ? "&" : "?"}cb=${cb}"`);
+  const shim = `<script>
+    window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 16);
+    window.print = () => {};
+    const __st = window.setTimeout;
+    window.setTimeout = (f, ms, ...a) => (ms === 6000 || ms === 2500 ? __st(() => {}, 0) : __st(f, ms, ...a)); // suppress the auto-return/cleanup timers
+  <\/script>`;
+  html = html.replace("<head>", "<head>" + shim);
+  const f = document.getElementById("f");
+  await new Promise((res) => { f.onload = res; f.srcdoc = html; });
+  // let web fonts finish (cold loads are slow), then the settle frames + redraws
+  try { await f.contentDocument.fonts.ready; } catch (e) {}
+  await wait(1500);
+  return f;
+}
+
+const rectOf = (n) => n.getBoundingClientRect();
+const cx = (r) => (r.left + r.right) / 2;
+
+function toScreen(el, x, y) {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + (x * r.width) / el.offsetWidth, y: r.top + (y * r.height) / el.offsetHeight };
+}
+
+function connectorFailures(el) {
+  const fails = [];
+  const lines = [...el.querySelectorAll("svg.connectors line")].map((l) => ({
+    a: toScreen(el, +l.getAttribute("x1"), +l.getAttribute("y1")),
+    b: toScreen(el, +l.getAttribute("x2"), +l.getAttribute("y2")),
+  }));
+  if (!lines.length) return ["no connector lines"];
+  const near = (p, q) => Math.abs(p.x - q.x) <= TOL && Math.abs(p.y - q.y) <= TOL;
+  lines.forEach((l, i) => {
+    if (Math.abs(l.a.x - l.b.x) > TOL && Math.abs(l.a.y - l.b.y) > TOL) fails.push(`line ${i} is diagonal`);
+  });
+  const rows = [...el.querySelectorAll(":scope > .gen")];
+  const kidsRow = rows.find((r) => r.classList.contains("gen-self-children"));
+  const gen = rows.filter((r) => r !== kidsRow);
+  function link(parent, kids, label) {
+    const pr = rectOf(parent);
+    const trunk = { x: cx(pr), y: pr.bottom };
+    if (!lines.some((l) => near(l.a, trunk))) fails.push(`${label}: no trunk at parent bottom-centre`);
+    const topY = Math.min(...kids.map((k) => rectOf(k).top));
+    const midY = (trunk.y + topY) / 2;
+    const xs = [trunk.x, ...kids.map((k) => cx(rectOf(k)))];
+    kids.forEach((k) => {
+      const end = { x: cx(rectOf(k)), y: topY };
+      if (!lines.some((l) => near(l.b, end))) fails.push(`${label}: drop misses "${k.querySelector(".person-name").textContent}"`);
+    });
+    if (Math.max(...xs) - Math.min(...xs) > TOL) {
+      const ok = lines.some((l) => Math.abs(l.a.y - midY) <= TOL && Math.abs(l.b.y - midY) <= TOL &&
+        Math.min(l.a.x, l.b.x) <= Math.min(...xs) + TOL && Math.max(l.a.x, l.b.x) >= Math.max(...xs) - TOL);
+      if (!ok) fails.push(`${label}: no bar joins trunk to every child`);
+    }
+  }
+  for (let i = 0; i < gen.length - 1; i++) link(gen[i], [...gen[i + 1].querySelectorAll(".person")], `row ${i}->${i + 1}`);
+  if (kidsRow) link(el.querySelector('.gen-children [data-role="self"]'), [...kidsRow.querySelectorAll(".person")], "self->children");
+  return fails;
+}
+
+const inside = (inner, outer, slack = 1) =>
+  inner.left >= outer.left - slack && inner.right <= outer.right + slack && inner.top >= outer.top - slack && inner.bottom <= outer.bottom + slack;
+// 1.5px slack: a tree that exactly fills its area legitimately touches the
+// band beside it; only a real intrusion should count.
+const overlaps = (a, b, s = 1.5) => a.left < b.right - s && a.right > b.left + s && a.top < b.bottom - s && a.bottom > b.top + s;
+
+// The free area is exactly what js/print.js / print-map.js reserve (the
+// shared PRINT_LAYOUT in js/state.js, read from the page under test): pad on
+// every side, the header band on top, and (tree page only) the footer band
+// for the QR/caption at the bottom.
+function fillFailures(d, content, headerEl, footerEls, hasFooterBand, headerKey) {
+  const fails = [];
+  const L = d.defaultView.eval("PRINT_LAYOUT"); // top-level const: not a window property
+  const card = rectOf(d.getElementById("card"));
+  const c = rectOf(content);
+  if (!inside(c, card)) fails.push("content leaves the card");
+  const pxPerMm = card.width / L.w;
+  const availW = (L.w - 2 * L.pad) * pxPerMm;
+  const availH = (L.h - (2 * L.pad + L[headerKey])) * pxPerMm;
+  if (overlaps(c, rectOf(headerEl))) fails.push("content overlaps the logo/header");
+  footerEls.forEach((e) => { if (overlaps(c, rectOf(e))) fails.push("content overlaps " + (e.id || e.className)); });
+  const wFill = c.width / availW;
+  const hFill = c.height / availH;
+  if (Math.max(wFill, hFill) < 0.95) {
+    fails.push(`does not fill the card: ${(wFill * 100).toFixed(0)}% wide, ${(hFill * 100).toFixed(0)}% tall of the free area`);
+  }
+  return { fails, wFill, hFill };
+}
+
+// Tree page: the logo (top-left) and QR + caption (bottom-right) are corner
+// furniture, and the tree is grown until it would touch one of them or the
+// padded edge. So: it must clear them by PRINT_LAYOUT.gap, stay inside the
+// padding, and be as big as that allows (2% larger would break a rule).
+function treeFitFailures(d, mount) {
+  const fails = [];
+  const L = d.defaultView.eval("PRINT_LAYOUT"); // top-level const: not a window property
+  const card = rectOf(d.getElementById("card"));
+  const mm = card.width / L.w;
+  const t = rectOf(mount);
+  const pad = L.pad * mm, gap = L.gap * mm;
+  const obstacles = ["cardHeader", "cardQr", "cardQrCaption"]
+    .map((id) => d.getElementById(id))
+    .filter((e) => e && d.defaultView.getComputedStyle(e).display !== "none")
+    .map((e) => ({ id: e.id, r: rectOf(e) }));
+  // each generation row is checked on its own (corner items may sit beside the narrow rows)
+  const rowBoxes = (grow) => [...mount.querySelectorAll(".family-tree > .gen")].map((r) => {
+    const b = rectOf(r);
+    const ccx = (card.left + card.right) / 2, ccy = (card.top + card.bottom) / 2;
+    return { left: ccx - (ccx - b.left) * grow, right: ccx + (b.right - ccx) * grow, top: ccy - (ccy - b.top) * grow, bottom: ccy + (b.bottom - ccy) * grow };
+  });
+  const clear = (box, o, g) => box.left >= o.right + g || box.right <= o.left - g || box.top >= o.bottom + g || box.bottom <= o.top - g;
+  const inBounds = (b) => b.left >= card.left + pad - 1 && b.right <= card.right - pad + 1 && b.top >= card.top + pad - 1 && b.bottom <= card.bottom - pad + 1;
+  if (!inBounds(t)) fails.push("tree leaves the padded card area");
+  obstacles.forEach((o) => { if (!rowBoxes(1).every((b) => clear(b, o.r, gap - 1))) fails.push("tree is too close to / overlaps " + o.id); });
+  // growth check about the card centre
+  const cx = (card.left + card.right) / 2, cy = (card.top + card.bottom) / 2;
+  const grown = { left: cx - (cx - t.left) * 1.02, right: cx + (t.right - cx) * 1.02, top: cy - (cy - t.top) * 1.02, bottom: cy + (t.bottom - cy) * 1.02 };
+  const scale = parseFloat(mount.style.transform.replace(/[^0-9.]/g, "")) || 0;
+  const atCeiling = scale >= 3.99;
+  if (!atCeiling && inBounds(grown) && obstacles.every((o) => rowBoxes(1.02).every((b) => clear(b, o.r, gap)))) fails.push("tree could still be ~2% bigger — not filling the card");
+  const wFill = t.width / (card.width - 2 * pad), hFill = t.height / (card.height - 2 * pad);
+  return { fails, wFill, hFill };
+}
+
+async function run() {
+  const log = document.getElementById("log");
+  let total = 0, bad = 0;
+  const report = (name, fails, extra) => {
+    total++; if (fails.length) bad++;
+    const row = document.createElement("div");
+    row.className = fails.length ? "fail" : "pass";
+    row.textContent = `${fails.length ? "FAIL" : "PASS"}  ${name}${extra ? "  [" + extra + "]" : ""}` + (fails.length ? "  -> " + fails.slice(0, 3).join(" ; ") : "");
+    log.appendChild(row);
+  };
+  {
+    for (const [name, tree] of Object.entries(TREES)) {
+      const data = JSON.parse(JSON.stringify(tree));
+      data.lang = "en"; data.shareUrl = "https://example.com/e/?id=1";
+      const f = await loadPrintPage("print.html", data);
+      const d = f.contentDocument;
+      const mount = d.getElementById("treeMount");
+      const el = mount.querySelector(".family-tree");
+      let fails = [];
+      let extra = "";
+      if (!el) { fails = ["tree did not render"]; }
+      else {
+        fails = connectorFailures(el);
+        const r = treeFitFailures(d, mount);
+        fails = fails.concat(r.fails);
+        extra = `scale ${mount.style.transform}, fill ${(r.wFill * 100).toFixed(0)}%w/${(r.hFill * 100).toFixed(0)}%h`;
+      }
+      report(`print.html A5 | ${name}`, fails, extra);
+    }
+
+    const data = { lang: "en", self: { ...P("Tan Wei"), children: [], surname: SURNAME, surnameToken: "CHEN" }, father: P("F"), mother: P("M"), siblings: [] };
+    const f = await loadPrintPage("print-map.html", data);
+    const d = f.contentDocument;
+    const mount = d.getElementById("surnameMount");
+    let fails = [], extra = "";
+    if (!mount || !mount.firstElementChild) fails = ["surname card did not render"];
+    else {
+      const r = fillFailures(d, mount, d.getElementById("cardHeader"), [], false, "textHeaderReserve");
+      fails = r.fails;
+      extra = `scale ${mount.style.transform}, fill ${(r.wFill * 100).toFixed(0)}%w/${(r.hFill * 100).toFixed(0)}%h`;
+    }
+    report(`print-map.html A5 | surname card`, fails, extra);
+  }
+  document.getElementById("summary").textContent = `RESULT: ${bad ? "FAIL" : "PASS"} (${total - bad}/${total} cases)`;
+  localStorage.removeItem("tanclan_visitor");
+}
+run();
+</script>
+</body>
+</html>

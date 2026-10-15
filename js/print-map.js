@@ -15,32 +15,49 @@
   I18n.setLang(data.lang || "en");
   I18n.applyTo(document);
 
-  const settings = State.getSettings();
-  const paper = PAPER_SIZES[settings.paperSize] || PAPER_SIZES.a6;
-
+  const L = PRINT_LAYOUT; // A5, see js/state.js
   document.getElementById("pageSizeStyle").textContent =
-    `@page { size: ${paper.w}mm ${paper.h}mm; margin: 0; }`;
+    `@page { size: ${L.w}mm ${L.h}mm; margin: 0; }`;
 
   const card = document.getElementById("card");
-  const PADDING_MM = 6;
-  const HEADER_RESERVE_MM = 8;
-  card.style.width = paper.w + "mm";
-  card.style.height = paper.h + "mm";
-  card.style.padding = `${PADDING_MM + HEADER_RESERVE_MM}mm ${PADDING_MM}mm ${PADDING_MM}mm`;
+  card.style.width = L.w + "mm";
+  card.style.height = L.h + "mm";
+  card.style.padding = `${L.pad + L.textHeaderReserve}mm ${L.pad}mm ${L.pad}mm`;
 
   const surnameMount = document.getElementById("surnameMount");
   renderSurnameCard(surnameMount, data);
 
+  const MAX_SCALE = 4;
   let printTriggered = false;
   let returned = false;
 
   function fitAndPrint() {
-    const cardRect = card.getBoundingClientRect();
-    const mountRect = surnameMount.getBoundingClientRect();
-    const availW = cardRect.width - PADDING_MM * 2 * (96 / 25.4);
-    const availH = cardRect.height - (PADDING_MM * 2 + HEADER_RESERVE_MM) * (96 / 25.4);
-    const scale = Math.min(availW / mountRect.width, availH / mountRect.height, 1);
-    surnameMount.style.transform = `scale(${scale})`;
+    const PX_PER_MM = 96 / 25.4;
+    const availW = (L.w - L.pad * 2) * PX_PER_MM;
+    const availH = (L.h - (L.pad * 2 + L.textHeaderReserve)) * PX_PER_MM;
+    const fit = () => Math.min(availW / surnameMount.offsetWidth, availH / surnameMount.offsetHeight);
+
+    // Scaling one fixed-width column leaves the other dimension empty (the
+    // card was authored narrow). So also let the text reflow: try a range of
+    // column widths, and keep whichever lets the scale come out largest —
+    // i.e. the one that fills the card best in both directions.
+    const cardEl = surnameMount.firstElementChild;
+    let best = fit();
+    if (cardEl && cardEl.classList.contains("surname-card")) {
+      let bestW = null;
+      const minW = 90 * PX_PER_MM;
+      for (let w = minW; w <= availW; w += availW / 24) {
+        cardEl.style.maxWidth = w + "px";
+        const sc = fit();
+        if (sc > best + 1e-6) {
+          best = sc;
+          bestW = w;
+        }
+      }
+      cardEl.style.maxWidth = bestW === null ? "" : bestW + "px";
+    }
+    // The ceiling only stops a very short card ballooning.
+    surnameMount.style.transform = `scale(${Math.min(best, MAX_SCALE)})`;
 
     setTimeout(() => {
       if (printTriggered) return;
@@ -49,7 +66,9 @@
     }, 200);
   }
 
-  requestAnimationFrame(() => requestAnimationFrame(fitAndPrint));
+  // Fonts first: late-swapping Montserrat/Noto reflows the text we measure.
+  const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  fontsReady.then(() => requestAnimationFrame(() => requestAnimationFrame(fitAndPrint)));
 
   function returnToStart() {
     if (returned) return;

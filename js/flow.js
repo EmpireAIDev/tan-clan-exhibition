@@ -200,7 +200,6 @@
   // ---- settings modal ----
   const settingsModal = document.getElementById("settingsModal");
   document.getElementById("settingsBtn").addEventListener("click", () => {
-    renderPaperOptions();
     refreshCsvRowCount();
     settingsModal.classList.add("open");
   });
@@ -218,23 +217,6 @@
   document.getElementById("exportCsvBtn").addEventListener("click", () => {
     CsvLog.downloadCsv(SURVEY_CSV_COLUMNS);
   });
-
-  function renderPaperOptions() {
-    const settings = State.getSettings();
-    const container = document.getElementById("paperSizeOptions");
-    container.innerHTML = "";
-    Object.keys(PAPER_SIZES).forEach((key) => {
-      const opt = PAPER_SIZES[key];
-      const btn = document.createElement("button");
-      btn.className = "paper-option" + (settings.paperSize === key ? " selected" : "");
-      btn.textContent = opt.labelKey;
-      btn.addEventListener("click", () => {
-        State.saveSettings({ paperSize: key });
-        renderPaperOptions();
-      });
-      container.appendChild(btn);
-    });
-  }
 
   // ---- idle auto-reset (3 minutes) ----
   const IDLE_WARNING_MS = 2.5 * 60 * 1000;

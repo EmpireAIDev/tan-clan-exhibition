@@ -799,22 +799,6 @@ h3, label { font-weight: 600; } /* subheadings/labels: Montserrat SemiBold */
   text-align: left;
 }
 .modal h2 { margin-top: 0; font-size: 20px; }
-.paper-option {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-}
-.paper-option.selected {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  font-weight: 700;
-}
-
 /* --- webcam modal --- */
 .webcam-modal { width: 420px; text-align: center; }
 .webcam-video-wrap {

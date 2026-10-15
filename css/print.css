@@ -30,26 +30,26 @@ html, body {
 
 .card-header {
   position: absolute;
-  top: 4mm;
+  top: 6mm;
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 3.2mm;
+  font-size: 4.5mm;
   letter-spacing: 0.5px;
   color: var(--gold, #D29A1A);
   font-weight: 700;
   text-transform: uppercase;
 }
 /* OOY CIRCLE emblem in place of the old "Tan Clan Exhibition" script
-   wordmark — print.html only. Height-driven (not width) since the source
-   art is a tall portrait lockup; HEADER_RESERVE_MM in js/print.js reserves
-   the vertical space this needs and must stay in sync with this height. */
+   wordmark — print.html only. Sits in the top-left corner, in the blank
+   area beside the (narrow) tree; js/print.js grows the tree until it would
+   touch this, the QR or the caption (PRINT_LAYOUT.gap clear space), so no
+   band has to be reserved for it. */
 .card-header-logo {
   position: absolute;
-  top: 2mm;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 15mm;
+  top: 8.5mm;
+  left: 8.5mm;
+  height: 32mm;
   width: auto;
 }
 
@@ -105,18 +105,36 @@ html, body {
 
 .card-qr {
   position: absolute;
-  bottom: 3mm;
-  right: 3mm;
-  width: 14mm;
-  height: 14mm;
+  bottom: 8.5mm;
+  right: 8.5mm;
+  width: 22mm;
+  height: 22mm;
   background: #fff;
-  padding: 1mm;
+  padding: 1.5mm;
   box-sizing: border-box;
   z-index: 5;
   display: none; /* only shown once a share link actually exists */
 }
 .card-qr.visible { display: block; }
 .card-qr svg { width: 100%; height: 100%; }
+
+/* Lucky Draw prompt stacked above the QR in the bottom-right corner — only
+   shown once a QR actually exists (see js/print.js), since the offer is
+   meaningless without a link to scan. */
+.card-qr-caption {
+  display: none;
+  position: absolute;
+  right: 8.5mm;
+  bottom: 33.5mm; /* QR top edge (8.5 + 22) + 3mm */
+  width: 40mm;
+  margin: 0;
+  font-size: 3.1mm;
+  line-height: 1.4;
+  color: var(--ink, #0D2B45);
+  text-align: center;
+}
+.card-qr-caption.visible { display: block; }
+.card-qr-caption strong { color: var(--primary, #E25A2C); font-weight: 700; }
 
 .printed-screen {
   position: fixed;
@@ -138,3 +156,10 @@ html, body {
   html, body { background: #fff; }
   .stage { height: auto; }
 }
+
+/* Print only: tighter generation spacing than the on-screen 34px. The
+   postcard is landscape and trees are tall, so the row gaps are what cap how
+   far the tree can scale up (see fitAndPrint in js/print.js) — trimming them
+   lets A5 (and A6) enlarge the cards instead of leaving margin. Connector
+   lines follow automatically (js/tree.js redraws on resize). */
+#treeMount .family-tree { gap: 22px; }

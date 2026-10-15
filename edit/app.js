@@ -221,7 +221,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     await docRef.update(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
     submittedBanner.style.display = "block";
   } catch (e) {
-    saveStatus.textContent = "Couldn't submit just now — check your connection and try again.";
+    saveStatus.textContent = "Couldn't enter you into the Lucky Draw just now — check your connection and try again.";
   }
 });
 

@@ -1,3 +1,14 @@
+// Display-only override: the CSV's primary English spelling is the
+// Mandarin pinyin ("Chen"), but this exhibition is for the Pek Sek Tan Clan
+// Association, who go by the Hokkien romanization "Tan" (already listed
+// among 陈's own spelling variants — see js/surname-data.js). Data
+// untouched; only what's shown to the visitor changes. Kept in sync with
+// the identical override in js/surname-picker.js's recordLabel.
+function surnameDisplayEn(surname) {
+  if (surname.en === "Chen" && surname.zh === "陈") return "Tan";
+  return surname.en;
+}
+
 // Renders the printed surname card: English + Chinese surname on top,
 // history/origin + a notable clan figure on the bottom. Replaces the
 // migration map on the "Print this map" mid-flow printout (print-map.html)
@@ -63,7 +74,7 @@ function renderSurnameCard(container, data) {
   zh.textContent = surname.zh;
   const en = document.createElement("div");
   en.className = "surname-en";
-  en.textContent = surname.en;
+  en.textContent = surnameDisplayEn(surname);
   top.appendChild(zh);
   top.appendChild(en);
   card.appendChild(top);
