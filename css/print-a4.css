@@ -295,4 +295,12 @@ html, body {
 .a4-panel { background: rgba(255, 252, 246, 0.74); }
 /* migration half: aged map paper. It is on the rotated block itself so the
    map turns with the content and reads upright once folded. */
-.a4-rot { background: #F6EBD7 url("../assets/a4-bg-migration.webp") center / cover no-repeat; }
+.a4-rot { background: #fff url("../assets/a4-bg-migration.webp") center / cover no-repeat; }
+
+/* KaiTi (楷体) for the two display Chinese lines: the big surname character and
+   the 根深则叶茂，源远则流长 divider. Falls back through the other KaiTi names
+   (Windows KaiTi / DFKai-SB, macOS STKaiti / BiauKai) and then to a serif. */
+.a4-surname .surname-zh,
+.a4-div-zh {
+  font-family: "KaiTi", "KaiTi_GB2312", "楷体", "STKaiti", "Kaiti SC", "DFKai-SB", "標楷體", "BiauKai", "Noto Serif SC", serif;
+}
