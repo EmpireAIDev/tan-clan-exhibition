@@ -74,7 +74,9 @@ function renderSurnameCard(container, data) {
   zh.textContent = surname.zh;
   const en = document.createElement("div");
   en.className = "surname-en";
-  en.textContent = surnameDisplayEn(surname);
+  // The spelling the visitor typed ("Liew") wins over the record's romanisation.
+  const typed = ((data.self.surnameText || "").trim());
+  en.textContent = typed ? typed.charAt(0).toUpperCase() + typed.slice(1) : surnameDisplayEn(surname);
   top.appendChild(zh);
   top.appendChild(en);
   card.appendChild(top);

@@ -1,0 +1,197 @@
+<!doctype html>
+<!--
+  Browser test for the four-stage family chart and "From Roots to Routes".
+  Loads the real kiosk (index.html, cache-busted) in an iframe and drives it:
+
+    - stage 1 name card: typing a surname suggests matches (ambiguous ones are
+      NOT auto-picked, a unique match is), choosing one stores the Chinese
+      surname, unknown spellings open the directory, "Can't find your
+      surname?" toggles it, the keepsake line names the family
+    - Next on stage 1 / 3 refuses to move on without the required names
+    - stages 2-4 show the right sections; siblings/children get a city, parents
+      and grandparents get a hometown
+    - the final Next lands on From Roots to Routes with one branch card per
+      sibling/child that has a city, and the right relation labels
+
+  "RESULT: PASS|FAIL" is written to #summary.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>chart flow tests</title>
+<style>
+  body { font-family: monospace; padding: 16px; }
+  .pass { color: #1a7f37; } .fail { color: #c62828; font-weight: 700; }
+  #summary { font-size: 18px; font-weight: 700; margin: 12px 0; }
+  iframe { position: absolute; left: -4000px; top: 0; width: 1280px; height: 800px; border: 0; }
+</style>
+</head>
+<body>
+<h3>chart flow tests</h3>
+<div id="summary">RESULT: RUNNING</div>
+<div id="log"></div>
+<iframe id="f"></iframe>
+<script>
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+let total = 0, bad = 0;
+const log = document.getElementById("log");
+function check(name, cond, detail) {
+  total++;
+  if (!cond) bad++;
+  const row = document.createElement("div");
+  row.className = cond ? "pass" : "fail";
+  row.textContent = (cond ? "PASS  " : "FAIL  ") + name + (!cond && detail !== undefined ? "  -> " + JSON.stringify(detail) : "");
+  log.appendChild(row);
+}
+
+async function run() {
+  localStorage.clear();
+  const cb = Date.now();
+  let html = await (await fetch("/index.html?x=" + cb, { cache: "no-store" })).text();
+  html = html.replace(/(src|href)="(js|css|assets)\/([^"]+)"/g, (m, a, d, p) => `${a}="/${d}/${p}${p.includes("?") ? "&" : "?"}cb=${cb}"`);
+  const f = document.getElementById("f");
+  await new Promise((res) => { f.onload = res; f.srcdoc = html; });
+  await wait(900);
+  const d = f.contentDocument, w = f.contentWindow, S = w.eval("State");
+  const q = (s) => d.querySelector(s), qa = (s) => [...d.querySelectorAll(s)];
+  const type = async (el, v) => { el.value = v; el.dispatchEvent(new Event("input")); await wait(60); };
+  const stage = () => q("#chartQuestions .stage-heading").textContent;
+  const screen = () => q(".screen.active").dataset.screen;
+
+  // get to the chart
+  q("#startBtn").click();
+  S.data.survey.mobile = "91234567"; S.data.survey.pdpaConsent = true;
+  q('[data-next="survey"]').click();
+  q("#surveyThanksContinueBtn").click();
+  await wait(400);
+  check("lands on the chart, stage 1", screen() === "chart" && /01/.test(stage()), stage());
+  check("step bar has 4 segments, first active", q("#stageBar").children.length === 4 && q("#stageBar").children[0].className === "active");
+
+  // ---- stage 1: name card ----
+  const sur = () => q('.name-card input[data-field="surname"]');
+  const giv = () => q('.name-card input[data-field="givenName"]');
+  check("surname and given name are separate fields", !!sur() && !!giv());
+  check("the directory is closed at first", q(".surname-directory").hidden === true);
+
+  q("#chartNextBtn").click(); await wait(100);
+  check("Next with no name stays on stage 1", /01/.test(stage()));
+
+  await type(sur(), "Low");
+  check("'Low' is ambiguous: several buttons, none auto-picked", qa(".surname-matches .type-grid button").length > 1 && !S.data.self.surname, qa(".surname-matches .type-grid button").length);
+  await type(sur(), "Dean");
+  check("a unique spelling ('Dean') is picked automatically", !!S.data.self.surname && S.data.self.surname.zh === "丁", S.data.self.surname && S.data.self.surname.zh);
+  await type(sur(), "Liew");
+  const liewBtns = qa(".surname-matches .type-grid button");
+  const liu = liewBtns.find((b) => /刘|劉/.test(b.textContent));
+  check("'Liew' offers 刘 to choose", !!liu, liewBtns.map((b) => b.textContent));
+  if (liu) { liu.click(); await wait(80); }
+  check("choosing 刘 keeps the typed spelling 'Liew' (no replacement)", S.data.self.surnameText === "Liew" && sur().value === "Liew", [S.data.self.surnameText, sur().value]);
+  check("the chosen Chinese surname is stored", S.data.self.surname && /刘|劉/.test(S.data.self.surname.zh), S.data.self.surname);
+  check("the name uses the typed spelling", S.data.self.name === "Liew", S.data.self.name);
+  check("the keepsake line uses the typed spelling", /The Liew Family Story/.test(q(".keepsake-line").textContent), q(".keepsake-line").textContent);
+  await type(sur(), "Zzqxv");
+  check("an unknown spelling opens the directory by itself", q(".surname-directory").hidden === false);
+  await type(sur(), "Tan");
+  check("typing a match closes the auto-opened directory again", q(".surname-directory").hidden === true);
+  const tan = qa(".surname-matches .type-grid button").find((b) => /陈/.test(b.textContent));
+  check("陈 is offered for 'Tan' and is labelled 'Tan'", !!tan && /Tan/.test(tan.textContent), tan && tan.textContent);
+  tan.click(); await wait(80);
+  check("choosing 陈 stores it (data keeps 'Chen')", S.data.self.surname && S.data.self.surname.zh === "陈" && S.data.self.surname.en === "Chen");
+  q(".name-card .link-btn").click(); await wait(60);
+  check("'Can't find your surname?' opens the directory", q(".surname-directory").hidden === false);
+  q(".dir-close").click(); await wait(40);
+  check("Close directory hides it", q(".surname-directory").hidden === true);
+  await type(giv(), "Jia Hui");
+  check("the name is composed 'Tan Jia Hui'", S.data.self.name === "Tan Jia Hui", S.data.self.name);
+  check("the keepsake line names the family", /The Tan Family Story/.test(q(".keepsake-line").textContent), q(".keepsake-line").textContent);
+
+  // ---- stage 2: children & siblings ----
+  q("#chartNextBtn").click(); await wait(150);
+  check("stage 2 is children & siblings", /02/.test(stage()) && !!q(".add-sibling-card"));
+  qa(".add-sibling-card").forEach((b) => b.click()); await wait(150);   // + child, + sibling
+  qa(".add-sibling-card").forEach((b) => b.click()); await wait(150);   // + child, + sibling
+  check("each child and sibling gets a 'where do they live now' picker", qa(".livenow-btn").length === 4, qa(".livenow-btn").length);
+  const pickCity = async (btn, name) => {
+    btn.click(); await wait(120);
+    const opt = qa(".photo-popover button").find((b) => b.textContent === name);
+    opt.click(); await wait(80);
+  };
+  const names = qa(".question-person input[data-field='name']");
+  await type(names[0], "Jia Hao"); await type(names[1], "Mei Mei"); await type(names[2], "Wei Ling"); await type(names[3], "Daniel");
+  let btns = qa(".livenow-btn");
+  await pickCity(btns[0], "London");      // a child: a city
+  await pickCity(btns[2], "Australia");   // a sibling: one of the 199 countries
+  // the other sibling stays without a place
+  check("a child's city is stored in location", S.data.self.children[0].location === "london", S.data.self.children[0]);
+  check("a sibling's country is stored in country", S.data.siblings[0].country === "Australia", S.data.siblings[0]);
+  check("siblings get the country picker, children the city picker", /country/i.test(btns[2].textContent) === false && /Australia/.test(qa(".livenow-btn")[2].textContent));
+  check("the places show under the people in the tree preview", /London/.test(q("#chartTree").textContent) && /Australia/.test(q("#chartTree").textContent));
+  // the picker offers all 199 countries (+ a Popular shortcut group)
+  qa(".livenow-btn")[3].click(); await wait(150);
+  const offered = new Set(qa(".photo-popover button").map((b) => b.textContent));
+  check("the country picker lists every country (>= 199 names)", offered.size >= 199, offered.size);
+  qa(".photo-popover button").find((b) => b.textContent === "Japan").click(); await wait(80);
+  check("a second sibling can choose Japan", S.data.siblings[1].country === "Japan");
+  S.data.siblings[0].type = "youngerSister";
+
+  // ---- stage 3: parents ----
+  q("#chartNextBtn").click(); await wait(150);
+  check("stage 3 is parents with a hometown card", /03/.test(stage()) && !!q(".hometown-btn"));
+  q("#chartNextBtn").click(); await wait(100);
+  check("Next with no parent names stays on stage 3", /03/.test(stage()));
+  const pn = qa(".question-person input[data-field='name']");
+  await type(pn[0], "Cheng Kiat"); await type(pn[1], "Mei Hua");
+  q(".hometown-btn").click(); await wait(150);
+  qa(".photo-popover button").find((b) => b.textContent === "Meizhou").click(); await wait(100);
+  check("the hometown is stored and shown as 'Meizhou, Guangdong'", S.data.origins.parents === "meizhou" && /Meizhou, Guangdong/.test(q(".hometown-selected").textContent), q(".hometown-selected").textContent);
+
+  // ---- stage 4: grandparents (+ great-grandparents) ----
+  q("#chartNextBtn").click(); await wait(150);
+  check("stage 4 shows grandparents and great-grandparents, each with a hometown card", /04/.test(stage()) && qa(".hometown-card").length === 2, qa(".hometown-card").length);
+  check("the last Next reads 'See our journey'", /See our journey/.test(q("#chartNextBtn").textContent), q("#chartNextBtn").textContent);
+  q("#chartBackBtn").click(); await wait(100);
+  check("Back steps back one stage", /03/.test(stage()));
+  q("#chartNextBtn").click(); await wait(100);
+
+  // ---- the journey screen ----
+  q("#chartNextBtn").click(); await wait(1200);
+  check("the last Next opens From Roots to Routes", screen() === "migration-map" && /From Roots to Routes/.test(q(".screen.active h1").textContent), q(".screen.active h1").textContent);
+  const cards = qa(".rr-branch");
+  check("one branch per child/sibling with a place (3)", cards.length === 3, cards.length);
+  const text = cards.map((c) => c.textContent).join(" | ");
+  check("branches name the place, relation and person", /London/.test(text) && /Son · Jia Hao/.test(text) && /Australia/.test(text) && /Sister · Wei Ling/.test(text), text);
+  check("a sibling's card says '<name> starts a new life in <place>.'", /Wei Ling starts a new life in Australia\./.test(text), text);
+  check("the sibling card uses that country's picture", /siblingMigration\/Australia\.jpg/.test(cards.map((c) => (c.querySelector(".rr-branch-art img") || {}).src).join(" ")));
+  check("every branch has art (photo or drawn skyline)", cards.every((c) => c.querySelector(".rr-branch-art img, .rr-branch-art svg")));
+  check("the roots side shows the origin and Singapore", qa(".journey-card").length >= 2);
+  check("the 'Our Routes' heading is shown", /OUR ROUTES/.test(q(".rr-heads").textContent));
+
+  // ---- the 199 pictures ----
+  const countries = w.eval("COUNTRIES");
+  check("there are 199 countries", countries.length === 199, countries.length);
+  const missing = [];
+  await Promise.all(countries.map(async (c) => {
+    const r = await fetch("/assets/siblingMigration/" + encodeURIComponent(c.file), { method: "HEAD", cache: "no-store" });
+    if (!r.ok) missing.push(c.file);
+  }));
+  check("every country has its picture file", missing.length === 0, missing.slice(0, 5));
+  check("every country has a Chinese name", countries.every((c) => c.zh && /[一-鿿]/.test(c.zh)));
+
+  // ---- Chinese ----
+  q('#langToggle [data-lang="zh"]').click(); await wait(300);
+  check("Chinese labels render on the journey screen", /从根到路/.test(q(".screen.active h1").textContent), q(".screen.active h1").textContent);
+  check("the sibling sentence is translated", /Wei Ling在澳大利亚开启了新的生活。/.test(qa(".rr-branch").map((c) => c.textContent).join(" ")), qa(".rr-branch").map((c) => c.textContent).join(" "));
+
+  document.getElementById("summary").textContent = `RESULT: ${bad ? "FAIL" : "PASS"} (${total - bad}/${total} checks)`;
+  localStorage.clear();
+}
+run().catch((e) => {
+  const row = document.createElement("div");
+  row.className = "fail";
+  row.textContent = "ERROR " + e.message;
+  log.appendChild(row);
+  document.getElementById("summary").textContent = "RESULT: FAIL (script error)";
+});
+</script>
+</body>
+</html>

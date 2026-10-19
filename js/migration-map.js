@@ -192,12 +192,88 @@ function buildPrintConnector() {
   return connector;
 }
 
+// "Our Routes": where the visitor's siblings and children live now. Each one
+// with a city chosen (js/chart-editor.js's "Where do they live now?") becomes
+// a branch off Singapore.
+function collectBranches(data) {
+  const out = [];
+  // Siblings who moved abroad: a country with a picture in
+  // assets/siblingMigration, described as "<name> starts a new life in <place>".
+  (data.siblings || []).forEach((p) => {
+    if (!p.country || !COUNTRIES_BY_KEY[p.country]) return;
+    const sister = p.type === "olderSister" || p.type === "youngerSister";
+    out.push({ person: p, country: COUNTRIES_BY_KEY[p.country], relKey: sister ? "branchSister" : "branchBrother" });
+  });
+  ((data.self && data.self.children) || []).forEach((p) => {
+    if (!p.location || !CITIES_BY_KEY[p.location]) return;
+    out.push({ person: p, city: CITIES_BY_KEY[p.location], relKey: p.gender === "daughter" ? "daughter" : "son" });
+  });
+  return out;
+}
+
+function buildBranchCard(branch, delaySeconds) {
+  const card = document.createElement("div");
+  card.className = "rr-branch";
+  card.style.setProperty("--delay", delaySeconds + "s");
+
+  const art = document.createElement("div");
+  art.className = "rr-branch-art";
+  const placeEn = branch.country ? branch.country.en : branch.city.en;
+  const placeZh = branch.country ? branch.country.zh : branch.city.zh;
+  if (branch.country) {
+    const img = document.createElement("img");
+    img.alt = "";
+    img.loading = "lazy";
+    img.onerror = () => img.remove(); // grey art backdrop stays, no broken-image glyph
+    img.src = countryImage(branch.country);
+    art.appendChild(img);
+  } else {
+    fillCityArt(art, branch.city);
+  }
+  card.appendChild(art);
+
+  const body = document.createElement("div");
+  body.className = "rr-branch-body";
+  const tag = document.createElement("div");
+  tag.className = "rr-branch-tag";
+  tag.textContent = I18n.t("familyBranchTag");
+  body.appendChild(tag);
+  const city = document.createElement("div");
+  city.className = "rr-branch-city";
+  const place = I18n.lang === "zh" ? placeZh : placeEn;
+  city.textContent = place;
+  body.appendChild(city);
+  const who = document.createElement("div");
+  who.className = "rr-branch-who";
+  who.textContent = I18n.t(branch.relKey) + (branch.person.name ? " · " + branch.person.name : "");
+  body.appendChild(who);
+  if (branch.country) {
+    const story = document.createElement("div");
+    story.className = "rr-branch-story";
+    story.textContent = I18n.t("siblingNewLife", { name: branch.person.name || I18n.t(branch.relKey), place: place });
+    body.appendChild(story);
+  }
+  card.appendChild(body);
+  return card;
+}
+
+function rrHead(a, b) {
+  const h = document.createElement("div");
+  h.className = "rr-head";
+  const strong = document.createElement("strong");
+  strong.textContent = a;
+  h.appendChild(strong);
+  h.appendChild(document.createTextNode(" / " + b));
+  return h;
+}
+
 function renderMigrationMap(container, data, opts) {
   opts = opts || {};
   container.innerHTML = "";
 
   const stops = getOriginSequence(data);
-  if (stops.length < 2) {
+  const branches = collectBranches(data);
+  if (stops.length < 2 && !branches.length) {
     const empty = document.createElement("p");
     empty.className = "subtitle";
     empty.textContent = I18n.t("migrationMapEmpty");
@@ -225,7 +301,35 @@ function renderMigrationMap(container, data, opts) {
     wrap.appendChild(buildLocationCard(stop, i, stops.length, i * 0.35));
   });
 
-  container.appendChild(wrap);
+  // Roots on the left, and (when siblings/children have a city) their routes
+  // branching off Singapore on the right — "From Roots to Routes".
+  const rr = document.createElement("div");
+  rr.className = "roots-routes" + (branches.length ? " has-routes" : "");
+
+  const heads = document.createElement("div");
+  heads.className = "rr-heads";
+  heads.appendChild(rrHead(I18n.t("rootsHeadA"), I18n.t("rootsHeadB")));
+  if (branches.length) heads.appendChild(rrHead(I18n.t("routesHeadA"), I18n.t("routesHeadB")));
+  rr.appendChild(heads);
+
+  const panel = document.createElement("div");
+  panel.className = "rr-panel";
+  panel.appendChild(wrap);
+
+  if (branches.length) {
+    const link = document.createElement("div");
+    link.className = "rr-link";
+    link.innerHTML = '<span class="rr-link-line"></span><span class="rr-link-dot"></span>';
+    panel.appendChild(link);
+
+    const routes = document.createElement("div");
+    routes.className = "rr-routes";
+    const base = stops.length * 0.35;
+    branches.forEach((br, i) => routes.appendChild(buildBranchCard(br, base + i * 0.3)));
+    panel.appendChild(routes);
+  }
+  rr.appendChild(panel);
+  container.appendChild(rr);
 
   // Kept for API parity with the previous animated map — js/flow.js's
   // "Watch again" button calls mapControl.replay(). The reveal itself is a
@@ -233,8 +337,12 @@ function renderMigrationMap(container, data, opts) {
   // rather than a JS timeline.
   function reveal() {
     wrap.classList.remove("journey-revealed");
+    panel.classList.remove("journey-revealed");
     void wrap.offsetWidth; // force reflow so the transition can restart
-    requestAnimationFrame(() => wrap.classList.add("journey-revealed"));
+    requestAnimationFrame(() => {
+      wrap.classList.add("journey-revealed");
+      panel.classList.add("journey-revealed");
+    });
   }
 
   if (opts.animated) {
@@ -244,6 +352,7 @@ function renderMigrationMap(container, data, opts) {
     // immediately — no point animating a snapshot, and it keeps print
     // timing simple (no transition to wait out before window.print()).
     wrap.classList.add("journey-revealed");
+    panel.classList.add("journey-revealed");
   }
 
   return { replay: reveal };

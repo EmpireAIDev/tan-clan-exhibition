@@ -77,19 +77,24 @@
     <section class="screen chart-screen" data-screen="chart">
       <div class="chart-inner">
         <h1 data-i18n="chartTitle">Build Your Family Tree</h1>
-        <p class="subtitle" data-i18n="chartSub">Answer the questions on the right — your family tree fills in on the left as you go.</p>
+        <p class="subtitle" data-i18n="chartSub">To understand where we are going, we begin with where we came from.</p>
+        <p class="chart-kicker" data-i18n="chartKicker">THE ROOTS OF YOUR FAMILY'S STORY</p>
+        <div class="stage-bar" id="stageBar" aria-hidden="true"></div>
+        <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
         <div class="chart-layout">
           <div class="chart-left">
-            <p class="generation-legend" data-i18n="generationLegend">Generation starts from the Family Root in Singapore (1st Generation).</p>
+            <p class="glance-title" data-i18n="glanceTitle">YOUR FAMILY AT A GLANCE</p>
+            <p class="glance-sub" data-i18n="glanceSub">One family tree, with stories reaching across generations.</p>
             <div class="preview-tree-wrap" id="chartTreeWrap">
+              <span class="roots-badge" data-i18n="ourRootsBadge">OUR ROOTS</span>
               <div id="chartTree"></div>
             </div>
           </div>
           <div class="chart-right" id="chartQuestions"></div>
         </div>
         <div class="nav-buttons">
-          <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-          <button class="btn btn-primary" data-next="chart" data-i18n="next">Next</button>
+          <button class="btn btn-ghost" id="chartBackBtn" data-i18n="back">Back</button>
+          <button class="btn btn-primary" id="chartNextBtn" data-i18n="next">Next</button>
         </div>
       </div>
     </section>
@@ -97,13 +102,18 @@
     <!-- 10. Migration path -->
     <section class="screen migration-screen" data-screen="migration-map">
       <div class="migration-inner">
-        <h1 data-i18n="migrationMapTitle">Your Migration Path</h1>
-        <p class="subtitle" data-i18n="migrationMapSub">Tracing your journey from your place of origin to Singapore</p>
+        <p class="rr-kicker" data-i18n="routesKicker">EVERY FAMILY HAS A STORY. EVERY JOURNEY LEAVES A LEGACY.</p>
+        <h1 data-i18n="routesTitle">From Roots to Routes</h1>
+        <p class="subtitle" data-i18n="routesSub">A Family's Journey Across Generations</p>
+        <p class="rr-sub2" data-i18n="routesSub2">From where our story began to where it continues today.</p>
         <div id="migrationMap"></div>
-        <div class="nav-buttons">
-          <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
-          <button class="btn btn-ghost" id="replayMapBtn" data-i18n="replay">Watch again</button>
-          <button class="btn btn-primary" data-next="migration-map" data-i18n="next">Next</button>
+        <div class="rr-footer-row">
+          <p class="rr-footer" data-i18n="routesFooter">Different destinations. Shared roots. A story still unfolding.</p>
+          <div class="nav-buttons">
+            <button class="btn btn-ghost" data-back data-i18n="back">Back</button>
+            <button class="btn btn-ghost" id="replayMapBtn" data-i18n="replay">Watch again</button>
+            <button class="btn btn-primary" data-next="migration-map" data-i18n="viewKeepsake">View our keepsake</button>
+          </div>
         </div>
       </div>
     </section>
@@ -120,7 +130,7 @@
           </div>
           <div id="shareBox" class="share-box" style="display:none">
             <h2 data-i18n="shareTitle">Scan to add photos at home!</h2>
-            <p class="subtitle" data-i18n="shareSub">Scan this with a phone, or visit the link below, to add real photos and enter the Lucky Draw.</p>
+            <p class="subtitle" data-i18n="shareSub">Scan this with a phone, or visit the link below, to add real photos and complete your family tree.</p>
             <div id="shareQr"></div>
             <p class="share-link" id="shareLinkText"></p>
             <p class="subtitle" data-i18n="shareCodeLabel">Or type this code:</p>
@@ -131,6 +141,7 @@
         <div class="nav-buttons">
           <button class="btn btn-ghost" data-back data-i18n="edit">Edit answers</button>
           <button class="btn btn-ghost" id="printMapBtn" data-i18n="printMap">Print this map</button>
+          <button class="btn btn-ghost" id="printA4Btn" data-i18n="printA4">Print foldable A4</button>
           <button class="btn btn-primary" id="printBtn" data-i18n="print">Print my family tree</button>
         </div>
         <div class="nav-buttons">
@@ -139,6 +150,20 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- Staff passcode gate: the gear button asks for this before opening settings -->
+  <div class="modal-overlay" id="pinModal">
+    <div class="modal">
+      <h2 data-i18n="pinTitle">Staff access</h2>
+      <p class="subtitle" style="margin-bottom:12px; font-size:14px;" data-i18n="pinPrompt">Enter the staff passcode to open settings.</p>
+      <input type="password" id="pinInput" class="pin-input" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <p class="pin-error" id="pinError" hidden data-i18n="pinWrong">Incorrect passcode — try again.</p>
+      <div class="nav-buttons" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="pinCancelBtn" data-i18n="cancel">Cancel</button>
+        <button class="btn btn-primary" id="pinSubmitBtn" data-i18n="pinUnlock">Unlock</button>
+      </div>
+    </div>
   </div>
 
   <!-- Settings modal (staff) -->
@@ -169,6 +194,8 @@
 <script src="js/i18n.js"></script>
 <script src="js/state.js"></script>
 <script src="js/places.js"></script>
+<script src="js/cities.js"></script>
+<script src="js/countries.js"></script>
 <script src="js/tree.js"></script>
 <script src="js/photo-capture.js"></script>
 <script src="js/surname-data.js"></script>

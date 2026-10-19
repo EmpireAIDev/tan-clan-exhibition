@@ -26,6 +26,18 @@
 
   const surnameMount = document.getElementById("surnameMount");
   renderSurnameCard(surnameMount, data);
+  // The headline the visitor was promised on the name step ("Your keepsake
+  // will say: The Tan Family Story").
+  if (data.self.surname) {
+    const typed = (data.self.surnameText || "").trim();
+    const surnameName =
+      I18n.lang === "zh"
+        ? data.self.surname.zh
+        : typed
+          ? typed.charAt(0).toUpperCase() + typed.slice(1)
+          : surnameDisplayEn(data.self.surname);
+    document.getElementById("cardHeader").textContent = I18n.t("familyStoryTitle", { name: surnameName });
+  }
 
   const MAX_SCALE = 4;
   let printTriggered = false;

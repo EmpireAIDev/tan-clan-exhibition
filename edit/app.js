@@ -220,8 +220,16 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   try {
     await docRef.update(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
     submittedBanner.style.display = "block";
+    // Show the finished foldable A4 so they can save it as a PDF or print it.
+    // print-a4.html reads the same "tanclan_visitor" record the kiosk prints
+    // from; this page's own link doubles as the QR code target.
+    saveStatus.textContent = "Saved! Opening your family keepsake…";
+    const keepsake = Object.assign({}, data, { shareUrl: data.shareUrl || location.href });
+    delete keepsake.updatedAt;
+    localStorage.setItem("tanclan_visitor", JSON.stringify(keepsake));
+    window.location.href = "../print-a4.html";
   } catch (e) {
-    saveStatus.textContent = "Couldn't enter you into the Lucky Draw just now — check your connection and try again.";
+    saveStatus.textContent = "Couldn't save your family tree just now — check your connection and try again.";
   }
 });
 

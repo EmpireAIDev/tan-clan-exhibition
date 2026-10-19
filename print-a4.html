@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Print — Foldable A4</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/print-a4.css" />
+</head>
+<body>
+
+<!-- Screen-only preview chrome -->
+<div class="a4-toolbar no-print">
+  <button class="btn btn-ghost" id="a4Back" data-i18n="a4BackBtn">Back</button>
+  <div class="a4-toolbar-text">
+    <strong data-i18n="a4PreviewTitle">A4 foldable keepsake — preview</strong>
+    <span data-i18n="a4PreviewHint">Fold the printed sheet along the centre line.</span>
+  </div>
+  <button class="btn btn-primary" id="a4Print" data-i18n="a4PrintBtn">Print A4</button>
+</div>
+
+<div class="a4-viewport" id="viewport">
+  <div class="a4-scaler" id="scaler">
+    <!-- The sheet: A4 portrait, folded along the horizontal centre line into an
+         A5-landscape card. Top half = migration path (rotated 180°), bottom half = family story + tree (upright). -->
+    <div class="a4-sheet" id="sheet">
+
+      <!-- Family story + family tree: the BOTTOM half of the sheet, upright (css order) -->
+      <section class="a4-half a4-top" id="topHalf">
+        <!-- ornamental frame (the background artwork will be added separately) -->
+        <div class="a4-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+        <header class="a4-fam-head">
+          <p class="a4-kicker">FROM ROOTS TO ROUTES &nbsp;·&nbsp; 从根到路</p>
+          <div class="a4-fam-titlerow">
+            <img class="a4-logo" src="assets/ooy-logo.webp" alt="OOY CIRCLE" />
+            <div class="a4-fam-titles">
+              <h1 class="a4-title" id="a4Title"></h1>
+              <p class="a4-tagline">Every family has a story. Every journey leaves a legacy.<span>每个家族都有一个故事，每段旅程都留下一份传承。</span></p>
+            </div>
+          </div>
+        </header>
+
+        <div class="a4-fam-panels">
+          <section class="a4-panel a4-panel-surname">
+            <h3 class="a4-panel-title"><b>&#9670;</b> OUR SURNAME STORY <em>/</em> 姓氏故事 <b>&#9670;</b></h3>
+            <div class="a4-surname" id="surnameMount"></div>
+            <div class="a4-more" id="a4More" hidden>
+              <svg class="a4-more-ico" viewBox="0 0 40 40" aria-hidden="true">
+                <circle cx="20" cy="20" r="18.5" fill="none" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M20 31V19M20 24l-6-5M20 22l6-6M20 19l-3-6M20 17l4-7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="14" cy="18" r="3" fill="currentColor"/><circle cx="26" cy="15" r="3" fill="currentColor"/><circle cx="17" cy="12" r="3" fill="currentColor"/><circle cx="24" cy="9.5" r="3" fill="currentColor"/><circle cx="20" cy="15" r="3.4" fill="currentColor"/>
+              </svg>
+              <div class="a4-more-text a4-more-hist">
+                <strong>Interested to know more? <span>想了解更多？</span></strong>
+                <p>Visit <b>mychinaroots.com/search/records</b> or get free research advice at <b>mychinaroots.com/get-in-touch</b></p>
+                <p class="a4-more-zh">欢迎浏览 <b>mychinaroots.com/search/records</b>，或前往 <b>mychinaroots.com/get-in-touch</b> 获取免费寻根咨询。</p>
+              </div>
+              <div class="a4-more-text a4-more-nohist">
+                <strong>Need help exploring your roots? <span>需要协助寻根？</span></strong>
+                <p>Visit <b>mychinaroots.com/get-in-touch</b> for free research advice.</p>
+                <p class="a4-more-zh">欢迎前往 <b>mychinaroots.com/get-in-touch</b> 获取免费寻根咨询。</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="a4-panel a4-panel-tree">
+            <h3 class="a4-panel-title"><b>&#9670;</b> OUR FAMILY TREE <em>/</em> 家族树 <b>&#9670;</b></h3>
+            <div class="a4-region" id="treeRegion"><div id="treeMount"></div></div>
+          </section>
+        </div>
+
+        <footer class="a4-fam-foot">Our roots connect us. Our stories carry on. <span>&nbsp;·&nbsp; 根缘相连，故事绵延。</span></footer>
+      </section>
+
+      <!-- Migration path: the TOP half of the sheet, turned 180° as one block -->
+      <section class="a4-half a4-bottom" id="bottomHalf">
+        <div class="a4-rot" id="bottomRot">
+          <header class="a4-mig-head">
+            <div class="a4-mig-titles">
+              <p class="a4-mig-kicker">OUR FAMILY'S JOURNEY &nbsp;·&nbsp; 我们的家族旅程</p>
+              <h2 class="a4-mig-title">From Roots to Routes</h2>
+              <p class="a4-mig-sub">A Family's Journey Across Generations <span>&nbsp;·&nbsp; 跨越世代的家族旅程</span></p>
+            </div>
+            <img class="a4-mig-logo" src="assets/ooy-logo.webp" alt="OOY CIRCLE" />
+          </header>
+
+          <div class="a4-mig-main" id="routesRegion"><div id="routesMount"></div></div>
+
+          <div class="a4-mig-divider">
+            <div class="a4-div-row"><i></i><span class="a4-div-zh">根深则叶茂，源远则流长</span><i></i></div>
+            <p class="a4-div-en">From deep roots, new journeys grow.</p>
+            <p class="a4-div-sub">We inherit the past. We shape what lasts.<span>&nbsp;·&nbsp; 承接过去，成就长久。</span></p>
+          </div>
+
+          <div class="a4-mig-more">
+            <h3 class="a4-sec-title">YOUR STORY DOESN'T END HERE <span>&nbsp;·&nbsp; 你的故事，不止于此</span></h3>
+            <div class="a4-qr-row" id="qrRow"></div>
+          </div>
+
+          <p class="a4-mig-foot">Every family has a story. Every journey leaves a legacy. <span>&nbsp;·&nbsp; 每个家族都有一个故事，每段旅程都留下一份传承。</span></p>
+        </div>
+      </section>
+
+      <div class="a4-fold-guide no-print" id="foldGuide"><span data-i18n="a4FoldLabel">FOLD HERE</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/state.js"></script>
+<script src="js/places.js"></script>
+<script src="js/cities.js"></script>
+<script src="js/countries.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/surname-card.js"></script>
+<script src="js/migration-theme.js"></script>
+<script src="js/migration-map.js"></script>
+<script src="js/qrcode-lib.js"></script>
+<script src="js/print-a4.js"></script>
+</body>
+</html>

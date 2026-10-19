@@ -113,6 +113,22 @@ function makePersonCard(role, person, extraClass) {
     card.appendChild(job);
   }
 
+  // Where they live now (siblings / children). Only on pages that load
+  // js/cities.js — i.e. on screen, not the printed postcard, which keeps its
+  // compact cards.
+  const whereText =
+    person.country && typeof countryLabel === "function"
+      ? countryLabel(person.country)
+      : person.location && typeof cityLabel === "function"
+      ? cityLabel(person.location)
+      : "";
+  if (whereText) {
+    const where = document.createElement("div");
+    where.className = "person-location";
+    where.textContent = whereText;
+    card.appendChild(where);
+  }
+
   return card;
 }
 

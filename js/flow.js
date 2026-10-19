@@ -85,18 +85,47 @@
     renderFamilyTree(document.getElementById("chartTree"), d);
   }
 
+  // The family chart is four stages (see js/chart-editor.js): 1 About you,
+  // 2 Children & siblings, 3 Parents, 4 Grandparents. chartStage survives
+  // navigating away and back (e.g. Back from the migration screen lands on
+  // the last stage); it only resets when a visitor starts the chart afresh.
+  let chartStage = 1;
+
+  function renderStageBar() {
+    const bar = document.getElementById("stageBar");
+    if (!bar.children.length) {
+      for (let i = 1; i <= CHART_STAGE_COUNT; i++) bar.appendChild(document.createElement("span"));
+    }
+    Array.from(bar.children).forEach((seg, i) => {
+      seg.className = i + 1 < chartStage ? "done" : i + 1 === chartStage ? "active" : "";
+    });
+    document.getElementById("chartNextBtn").textContent = I18n.t(chartStage === CHART_STAGE_COUNT ? "stageSeeJourney" : "next") + (chartStage === CHART_STAGE_COUNT ? " →" : "");
+  }
+
   function renderChart() {
     renderChartLeft();
-    renderQuestionPanel(document.getElementById("chartQuestions"), State.data, {
-      onPersonChange: () => {
-        State.save();
-        renderChartLeft();
+    renderStageBar();
+    renderQuestionPanel(
+      document.getElementById("chartQuestions"),
+      State.data,
+      {
+        onPersonChange: () => {
+          State.save();
+          renderChartLeft();
+        },
+        onStructuralChange: () => {
+          State.save();
+          renderChart();
+        },
       },
-      onStructuralChange: () => {
-        State.save();
-        renderChart();
-      },
-    });
+      chartStage
+    );
+  }
+
+  function setChartStage(n) {
+    chartStage = Math.min(CHART_STAGE_COUNT, Math.max(1, n));
+    renderChart();
+    document.getElementById("chartQuestions").scrollTop = 0;
   }
 
   // ---- language ----
@@ -148,9 +177,11 @@
       State.save();
       goto("survey-thanks");
     } else if (from === "chart") {
-      if (!d.self.name.trim()) return shakeChartField("self");
-      if (!d.father.name.trim()) return shakeChartField("father");
-      if (!d.mother.name.trim()) return shakeChartField("mother");
+      // The first missing required name sends the visitor to the stage that
+      // asks for it (self: stage 1, parents: stage 3) and shakes that field.
+      if (!d.self.name.trim()) return shakeChartField("self", 1);
+      if (!d.father.name.trim()) return shakeChartField("father", 3);
+      if (!d.mother.name.trim()) return shakeChartField("mother", 3);
       d.knowGrandparents = !!(d.grandfather.name.trim() || d.grandmother.name.trim());
       d.knowGreatGrandparents = !!(d.greatGrandfather.name.trim() || d.greatGrandmother.name.trim());
       State.save();
@@ -160,8 +191,31 @@
     }
   }
 
-  function shakeChartField(role) {
-    const input = document.querySelector('#chartQuestions [data-role="' + role + '"] .question-input[data-field="name"]');
+  document.getElementById("chartNextBtn").addEventListener("click", () => {
+    const d = State.data;
+    // Required names are checked as the visitor leaves the stage that asks
+    // for them, not only at the very end.
+    if (chartStage === 1 && !d.self.name.trim()) return shakeChartField("self", 1);
+    if (chartStage === 3 && !d.father.name.trim()) return shakeChartField("father", 3);
+    if (chartStage === 3 && !d.mother.name.trim()) return shakeChartField("mother", 3);
+    if (chartStage < CHART_STAGE_COUNT) setChartStage(chartStage + 1);
+    else handleNext("chart");
+  });
+  document.getElementById("chartBackBtn").addEventListener("click", () => {
+    if (chartStage > 1) setChartStage(chartStage - 1);
+    else back();
+  });
+
+  function shakeChartField(role, stage) {
+    if (chartStage !== stage) setChartStage(stage);
+    let input;
+    if (role === "self") {
+      // the visitor's name is two fields: surname first, then given name
+      const q = (field) => document.querySelector('#chartQuestions .name-card input[data-field="' + field + '"]');
+      input = !State.data.self.surnameText || !State.data.self.surnameText.trim() ? q("surname") : q("givenName");
+    } else {
+      input = document.querySelector('#chartQuestions [data-role="' + role + '"] .question-input[data-field="name"]');
+    }
     if (!input) return;
     input.scrollIntoView({ block: "center", behavior: "smooth" });
     input.style.borderColor = "#C62828";
@@ -179,6 +233,7 @@
   // visitor re-submit the survey a second time.
   document.getElementById("surveyThanksContinueBtn").addEventListener("click", () => {
     history = ["welcome"];
+    chartStage = 1;
     goto("chart");
   });
 
@@ -191,6 +246,13 @@
     window.location.href = "print-map.html";
   });
 
+  // Foldable A4 (family story + tree | migration path, rotated 180°) opens a
+  // preview first; the visitor prints from there.
+  document.getElementById("printA4Btn").addEventListener("click", () => {
+    State.save();
+    window.location.href = "print-a4.html";
+  });
+
   // ---- print ----
   document.getElementById("printBtn").addEventListener("click", () => {
     State.save();
@@ -199,9 +261,47 @@
 
   // ---- settings modal ----
   const settingsModal = document.getElementById("settingsModal");
-  document.getElementById("settingsBtn").addEventListener("click", () => {
-    refreshCsvRowCount();
-    settingsModal.classList.add("open");
+  // Staff-only gate in front of the settings (CSV export of visitors' contact
+  // details). This is a casual client-side check to stop visitors poking at
+  // the gear — the passcode is visible to anyone who views this file, so it
+  // is not real security.
+  const STAFF_PASSCODE = "286888EmpireAi";
+  const pinModal = document.getElementById("pinModal");
+  const pinInput = document.getElementById("pinInput");
+  const pinError = document.getElementById("pinError");
+
+  function openPinModal() {
+    pinInput.value = "";
+    pinError.hidden = true;
+    pinModal.classList.add("open");
+    pinInput.focus();
+  }
+  function closePinModal() {
+    pinModal.classList.remove("open");
+    pinInput.value = "";
+  }
+  function submitPin() {
+    if (pinInput.value.trim() === STAFF_PASSCODE) {
+      closePinModal();
+      refreshCsvRowCount();
+      settingsModal.classList.add("open");
+    } else {
+      pinError.hidden = false;
+      pinInput.value = "";
+      pinInput.classList.add("shake-error");
+      setTimeout(() => pinInput.classList.remove("shake-error"), 700);
+      pinInput.focus();
+    }
+  }
+  document.getElementById("settingsBtn").addEventListener("click", openPinModal);
+  document.getElementById("pinSubmitBtn").addEventListener("click", submitPin);
+  document.getElementById("pinCancelBtn").addEventListener("click", closePinModal);
+  pinInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitPin();
+    else if (e.key === "Escape") closePinModal();
+  });
+  pinModal.addEventListener("click", (e) => {
+    if (e.target === pinModal) closePinModal();
   });
   document.getElementById("closeSettingsBtn").addEventListener("click", () => {
     settingsModal.classList.remove("open");
@@ -231,6 +331,8 @@
     warnTimer = setTimeout(() => idleOverlay.classList.add("open"), IDLE_WARNING_MS);
     resetTimer = setTimeout(() => {
       idleOverlay.classList.remove("open");
+      closePinModal();
+      settingsModal.classList.remove("open");
       if (history[history.length - 1] !== "welcome") {
         State.reset();
         history = ["welcome"];

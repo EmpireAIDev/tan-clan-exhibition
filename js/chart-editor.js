@@ -109,101 +109,199 @@ function openPhotoMenu(avatarEl, person, onChanged) {
   });
 }
 
-// ---- origin question (per generation) ----
-function makeOriginQuestion(data, generationKey, questionKey) {
-  const row = document.createElement("div");
-  row.className = "question-row origin-question";
+// ---- grouped, searchable picker (ancestral hometowns, current cities) ----
+// cfg: { groups: [{key,en,zh}], items: [{key,en,zh,group}], placeholder,
+//        onPick(key), onClear() } — one heading + button list per group so a
+// long list stays scannable; the search box filters both, hiding a group
+// once none of its items match.
+function openGroupedPicker(anchorEl, cfg) {
+  openPopover(anchorEl, (pop) => {
+    pop.classList.add("origin-popover");
 
-  const label = document.createElement("label");
-  label.textContent = I18n.t(questionKey);
-  row.appendChild(label);
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "origin-search";
+    searchInput.placeholder = cfg.placeholder;
+    pop.appendChild(searchInput);
 
-  const chip = document.createElement("button");
-  chip.className = "origin-chip";
-  function refresh() {
-    const val = data.origins[generationKey];
-    if (val) {
-      chip.textContent = placeLabel(val);
-      chip.classList.add("set");
-    } else {
-      chip.textContent = I18n.t("whereDidTheyLive");
-      chip.classList.remove("set");
-    }
-  }
-  refresh();
-  chip.addEventListener("click", () => {
-    openPopover(chip, (pop) => {
-      pop.classList.add("origin-popover");
+    const groupEntries = [];
+    cfg.groups.forEach((group) => {
+      const inGroup = cfg.items.filter((it) => it.group === group.key);
+      if (!inGroup.length) return;
 
-      const searchInput = document.createElement("input");
-      searchInput.type = "text";
-      searchInput.className = "origin-search";
-      searchInput.placeholder = I18n.t("searchPlacePlaceholder");
-      pop.appendChild(searchInput);
+      const heading = document.createElement("div");
+      heading.className = "origin-group-heading";
+      heading.textContent = I18n.lang === "zh" ? group.zh : group.en;
+      pop.appendChild(heading);
 
-      // One heading + button list per group (see js/places.js's PLACE_GROUPS),
-      // so a ~70-entry list stays scannable; the search box filters both,
-      // hiding a group entirely once none of its places match.
-      const groupEntries = [];
-      PLACE_GROUPS.forEach((group) => {
-        const placesInGroup = PLACES.filter((p) => p.group === group.key);
-        if (!placesInGroup.length) return;
-
-        const heading = document.createElement("div");
-        heading.className = "origin-group-heading";
-        heading.textContent = I18n.lang === "zh" ? group.zh : group.en;
-        pop.appendChild(heading);
-
-        const buttons = placesInGroup.map((place) => {
-          const btn = document.createElement("button");
-          btn.textContent = I18n.lang === "zh" ? place.zh : place.en;
-          btn.addEventListener("click", () => {
-            data.origins[generationKey] = place.key;
-            refresh();
-            closePopover();
-          });
-          pop.appendChild(btn);
-          return { btn, en: place.en, zh: place.zh };
+      const buttons = inGroup.map((item) => {
+        const btn = document.createElement("button");
+        btn.textContent = I18n.lang === "zh" ? item.zh : item.en;
+        btn.addEventListener("click", () => {
+          cfg.onPick(item.key);
+          closePopover();
         });
-
-        groupEntries.push({ heading, buttons });
+        pop.appendChild(btn);
+        return { btn, en: item.en, zh: item.zh };
       });
-
-      function applyFilter() {
-        const q = searchInput.value.trim().toLowerCase();
-        groupEntries.forEach(({ heading, buttons }) => {
-          let anyVisible = false;
-          buttons.forEach(({ btn, en, zh }) => {
-            const match = !q || en.toLowerCase().includes(q) || zh.includes(searchInput.value.trim());
-            btn.style.display = match ? "" : "none";
-            if (match) anyVisible = true;
-          });
-          heading.style.display = anyVisible ? "" : "none";
-        });
-      }
-      searchInput.addEventListener("input", applyFilter);
-
-      const clearBtn = document.createElement("button");
-      clearBtn.className = "danger";
-      clearBtn.textContent = I18n.t("removePhoto"); // reuse "Remove" label
-      clearBtn.addEventListener("click", () => {
-        data.origins[generationKey] = null;
-        refresh();
-        closePopover();
-      });
-      pop.appendChild(clearBtn);
-
-      setTimeout(() => searchInput.focus(), 0);
+      groupEntries.push({ heading, buttons });
     });
+
+    function applyFilter() {
+      const q = searchInput.value.trim().toLowerCase();
+      groupEntries.forEach(({ heading, buttons }) => {
+        let anyVisible = false;
+        buttons.forEach(({ btn, en, zh }) => {
+          const match = !q || en.toLowerCase().includes(q) || zh.includes(searchInput.value.trim());
+          btn.style.display = match ? "" : "none";
+          if (match) anyVisible = true;
+        });
+        heading.style.display = anyVisible ? "" : "none";
+      });
+    }
+    searchInput.addEventListener("input", applyFilter);
+
+    const clearBtn = document.createElement("button");
+    clearBtn.className = "danger";
+    clearBtn.textContent = I18n.t("removePhoto"); // reuse "Remove" label
+    clearBtn.addEventListener("click", () => {
+      cfg.onClear();
+      closePopover();
+    });
+    pop.appendChild(clearBtn);
+
+    setTimeout(() => searchInput.focus(), 0);
   });
-  row.appendChild(chip);
+}
+
+// "Meizhou, Guangdong" — a county/city plus its province where there is one.
+function placeFullLabel(key) {
+  const p = PLACES_BY_KEY[key];
+  if (!p) return "";
+  const g = PLACE_GROUPS.find((x) => x.key === p.group);
+  const provinceGroups = ["guangdong", "fujian", "guangxi", "zhejiang"];
+  if (g && provinceGroups.includes(p.group) && p.en !== g.en && p.zh !== g.zh) {
+    if (I18n.lang === "zh") return g.zh.replace(/省$/, "") + p.zh;
+    return p.en + ", " + g.en.replace(/ Province$/, "");
+  }
+  return placeLabel(key);
+}
+
+// ---- ancestral hometown (per generation): a big call-to-action card ----
+function makeHometownCard(data, generationKey, onChange) {
+  const card = document.createElement("div");
+  card.className = "hometown-card";
+
+  const kicker = document.createElement("div");
+  kicker.className = "hometown-kicker";
+  kicker.textContent = I18n.t("hometownKicker");
+  card.appendChild(kicker);
+
+  const q = document.createElement("div");
+  q.className = "hometown-q";
+  q.textContent = I18n.t("hometownQ_" + generationKey);
+  card.appendChild(q);
 
   const hint = document.createElement("p");
-  hint.className = "question-hint";
-  hint.textContent = I18n.t("originHint");
-  row.appendChild(hint);
+  hint.className = "hometown-hint";
+  hint.textContent = I18n.t("hometownHint");
+  card.appendChild(hint);
 
-  return row;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "hometown-btn";
+  card.appendChild(btn);
+
+  const selected = document.createElement("div");
+  selected.className = "hometown-selected";
+  card.appendChild(selected);
+
+  function refresh() {
+    const val = data.origins[generationKey];
+    btn.innerHTML = "";
+    const icon = document.createElement("span");
+    icon.className = "hometown-btn-icon";
+    icon.textContent = "◉";
+    btn.appendChild(icon);
+    const label = document.createElement("span");
+    label.textContent = I18n.t("hometownBtn_" + generationKey);
+    btn.appendChild(label);
+    const arrow = document.createElement("span");
+    arrow.className = "hometown-btn-arrow";
+    arrow.textContent = "→";
+    btn.appendChild(arrow);
+    selected.hidden = !val;
+    selected.textContent = val ? I18n.t("hometownSelected") + " " + placeFullLabel(val) + " ✓" : "";
+  }
+  refresh();
+
+  btn.addEventListener("click", () =>
+    openGroupedPicker(btn, {
+      groups: PLACE_GROUPS,
+      items: PLACES,
+      placeholder: I18n.t("searchPlacePlaceholder"),
+      onPick: (key) => {
+        data.origins[generationKey] = key;
+        refresh();
+        if (onChange) onChange();
+      },
+      onClear: () => {
+        data.origins[generationKey] = null;
+        refresh();
+        if (onChange) onChange();
+      },
+    })
+  );
+  return card;
+}
+
+// ---- where a sibling / child lives now (feeds the "Our Routes" branches) ----
+// kind "country": a sibling who moved abroad — one of the 199 countries that
+// have a picture in assets/siblingMigration (js/countries.js), stored in
+// person.country. kind "city" (default): a child's city, in person.location.
+function makeLiveNowCard(person, onChange, kind) {
+  const isCountry = kind === "country";
+  const field = isCountry ? "country" : "location";
+  const labelOf = isCountry ? countryLabel : cityLabel;
+  const wrap = document.createElement("div");
+  wrap.className = "livenow";
+
+  const label = document.createElement("div");
+  label.className = "livenow-q";
+  label.textContent = I18n.t("liveNowQ");
+  wrap.appendChild(label);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "livenow-btn";
+  wrap.appendChild(btn);
+
+  function refresh() {
+    btn.classList.toggle("set", !!person[field]);
+    btn.textContent = person[field]
+      ? "📍 " + labelOf(person[field]) + " ✓"
+      : I18n.t(isCountry ? "liveNowBtnCountry" : "liveNowBtn") + " →";
+  }
+  refresh();
+
+  btn.addEventListener("click", () =>
+    openGroupedPicker(btn, {
+      groups: isCountry ? COUNTRY_GROUPS : CITY_GROUPS,
+      items: isCountry ? COUNTRY_PICKER_ITEMS : CITIES,
+      placeholder: I18n.t(isCountry ? "searchCountryPlaceholder" : "searchCityPlaceholder"),
+      onPick: (key) => {
+        person[field] = key;
+        refresh();
+        if (onChange) onChange();
+      },
+      onClear: () => {
+        person[field] = null;
+        refresh();
+        if (onChange) onChange();
+      },
+    })
+  );
+  return wrap;
 }
 
 // ---- one person's question block (name + optional job/type + photo) ----
@@ -264,17 +362,6 @@ function makeQuestionPersonBlock(role, person, opts) {
   nameInputRow.appendChild(nameInput);
   nameRow.appendChild(nameInputRow);
   block.appendChild(nameRow);
-
-  // Surname lookup only applies to the visitor's own name — see
-  // js/surname-picker.js. A separate input listener (rather than folding
-  // into the one above) keeps that lookup logic out of the generic
-  // name-field handler shared by every other role.
-  if (opts.surname) {
-    const picker = SurnamePicker.mount(block, person, () => {
-      if (opts.onPersonChange) opts.onPersonChange();
-    });
-    nameInput.addEventListener("input", () => picker.sync());
-  }
 
   if (opts.showTypeSelect) {
     const typeRow = document.createElement("div");
@@ -342,6 +429,8 @@ function makeQuestionPersonBlock(role, person, opts) {
   jobRow.appendChild(jobInput);
   block.appendChild(jobRow);
 
+  if (opts.showLocation) block.appendChild(makeLiveNowCard(person, opts.onPersonChange, opts.showLocation));
+
   if (opts.onRemove) {
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-sibling-btn";
@@ -357,6 +446,66 @@ function makeQuestionPersonBlock(role, person, opts) {
   return block;
 }
 
+// Photo + job for the visitor themself (their name lives in the surname /
+// given name card, see js/surname-picker.js).
+function makeSelfExtrasBlock(person, callbacks) {
+  const block = document.createElement("div");
+  block.className = "question-person";
+  block.dataset.role = "self";
+
+  const photoRow = document.createElement("div");
+  photoRow.className = "question-row";
+  const photoLabel = document.createElement("label");
+  photoLabel.textContent = I18n.t("selfPhotoLabel");
+  photoRow.appendChild(photoLabel);
+  const avatarBtn = document.createElement("button");
+  avatarBtn.type = "button";
+  avatarBtn.className = "q-avatar-btn";
+  function renderAvatarContent() {
+    avatarBtn.innerHTML = "";
+    if (person.photo) {
+      avatarBtn.classList.add("avatar-has-photo");
+      const img = document.createElement("img");
+      img.src = person.photo;
+      img.alt = person.name || "";
+      avatarBtn.appendChild(img);
+    } else {
+      avatarBtn.classList.remove("avatar-has-photo");
+      avatarBtn.style.background = ROLE_COLORS.self;
+      avatarBtn.textContent = avatarFallback("self", person);
+    }
+  }
+  renderAvatarContent();
+  avatarBtn.addEventListener("click", () =>
+    openPhotoMenu(avatarBtn, person, () => {
+      renderAvatarContent();
+      if (callbacks.onPersonChange) callbacks.onPersonChange();
+    })
+  );
+  photoRow.appendChild(avatarBtn);
+  block.appendChild(photoRow);
+
+  const jobRow = document.createElement("div");
+  jobRow.className = "question-row";
+  const jobLabel = document.createElement("label");
+  jobLabel.textContent = I18n.t("selfJobLabel");
+  jobRow.appendChild(jobLabel);
+  const jobInput = document.createElement("input");
+  jobInput.type = "text";
+  jobInput.className = "question-input";
+  jobInput.dataset.field = "job";
+  jobInput.maxLength = 40;
+  jobInput.placeholder = I18n.t("jobPlaceholder");
+  jobInput.value = person.job || "";
+  jobInput.addEventListener("input", () => {
+    person.job = jobInput.value;
+    if (callbacks.onPersonChange) callbacks.onPersonChange();
+  });
+  jobRow.appendChild(jobInput);
+  block.appendChild(jobRow);
+  return block;
+}
+
 // ---- self's own children only — one level, no grandchildren (self is the
 // Family Root in Singapore's own generation; the tree doesn't go further
 // down than that). Renders a flat list directly into `container`.
@@ -368,6 +517,7 @@ function makeDescendantEditor(container, selfPerson, callbacks) {
         nameLabelKey: "siblingName",
         jobLabelKey: "siblingJobLabel",
         showGenderSelect: true,
+        showLocation: "city",
         onPersonChange: callbacks.onPersonChange,
         onRemove: () => {
           children.splice(i, 1);
@@ -394,122 +544,125 @@ function questionSectionHeading(text) {
   return h;
 }
 
-// ---- full right-panel question list ----
-function renderQuestionPanel(container, data, callbacks) {
-  container.innerHTML = "";
+// "03  LET'S MEET YOUR PARENTS"
+function stageHeading(stage) {
+  const h = document.createElement("h2");
+  h.className = "stage-heading";
+  const num = document.createElement("span");
+  num.className = "stage-num";
+  num.textContent = String(stage).padStart(2, "0");
+  h.appendChild(num);
+  h.appendChild(document.createTextNode(I18n.t("stageTitle" + stage)));
+  return h;
+}
 
-  // -- about you --
-  const selfSection = document.createElement("div");
-  selfSection.className = "question-section";
-  selfSection.appendChild(questionSectionHeading(I18n.t("aboutYouTitle")));
-  selfSection.appendChild(
-    makeQuestionPersonBlock("self", data.self, {
-      nameLabelKey: "nameLabel",
-      jobLabelKey: "selfJobLabel",
-      surname: true,
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  container.appendChild(selfSection);
+const CHART_STAGE_COUNT = 4;
 
-  // -- self's descendants (self = Generation 1 / Family Root in Singapore) --
-  const childrenSection = document.createElement("div");
-  childrenSection.className = "question-section";
-  childrenSection.appendChild(questionSectionHeading(I18n.t("childrenSectionTitle")));
-  makeDescendantEditor(childrenSection, data.self, callbacks);
-  container.appendChild(childrenSection);
-
-  // -- siblings --
-  const siblingsSection = document.createElement("div");
-  siblingsSection.className = "question-section";
-  siblingsSection.appendChild(questionSectionHeading(I18n.t("siblingsYN")));
-  (data.siblings || []).forEach((sib, i) => {
-    siblingsSection.appendChild(
-      makeQuestionPersonBlock(siblingRole(sib.type), sib, {
-        nameLabelKey: "siblingName",
-        jobLabelKey: "siblingJobLabel",
-        showTypeSelect: true,
+function coupleSection(titleKey, a, b, hometownKey, data, callbacks) {
+  const section = document.createElement("div");
+  section.className = "question-section";
+  if (titleKey) section.appendChild(questionSectionHeading(I18n.t(titleKey)));
+  [a, b].forEach((p) =>
+    section.appendChild(
+      makeQuestionPersonBlock(p.role, p.person, {
+        nameLabelKey: p.nameKey,
+        jobLabelKey: p.jobKey,
         onPersonChange: callbacks.onPersonChange,
-        onStructuralChange: callbacks.onStructuralChange,
-        onRemove: () => {
-          data.siblings.splice(i, 1);
-          callbacks.onStructuralChange();
-        },
       })
-    );
-  });
-  if ((data.siblings || []).length < 6) {
-    const addBtn = document.createElement("button");
-    addBtn.className = "add-sibling-card";
-    addBtn.textContent = I18n.t("addSibling");
-    addBtn.addEventListener("click", () => {
-      data.siblings.push({ name: "", type: "youngerBrother", job: "", photo: null });
-      callbacks.onStructuralChange();
-    });
-    siblingsSection.appendChild(addBtn);
+    )
+  );
+  section.appendChild(makeHometownCard(data, hometownKey, callbacks.onPersonChange));
+  return section;
+}
+
+// ---- the question panel for ONE stage of the four-stage chart ----
+//   1 About you · 2 Children & siblings · 3 Parents · 4 Grandparents
+// (great-grandparents ride along in stage 4, below the grandparents)
+function renderQuestionPanel(container, data, callbacks, stage) {
+  stage = Math.min(CHART_STAGE_COUNT, Math.max(1, stage || 1));
+  container.innerHTML = "";
+  container.appendChild(stageHeading(stage));
+
+  if (stage === 1) {
+    const section = document.createElement("div");
+    section.className = "question-section";
+    SurnamePicker.mountNameCard(section, data.self, callbacks.onPersonChange);
+    section.appendChild(makeSelfExtrasBlock(data.self, callbacks));
+    container.appendChild(section);
   }
-  container.appendChild(siblingsSection);
 
-  // -- parents --
-  const parentsSection = document.createElement("div");
-  parentsSection.className = "question-section";
-  parentsSection.appendChild(questionSectionHeading(I18n.t("parentsTitle")));
-  parentsSection.appendChild(
-    makeQuestionPersonBlock("father", data.father, {
-      nameLabelKey: "fatherName",
-      jobLabelKey: "fatherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  parentsSection.appendChild(
-    makeQuestionPersonBlock("mother", data.mother, {
-      nameLabelKey: "motherName",
-      jobLabelKey: "motherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  parentsSection.appendChild(makeOriginQuestion(data, "parents", "originParentsQuestion"));
-  container.appendChild(parentsSection);
+  if (stage === 2) {
+    const childrenSection = document.createElement("div");
+    childrenSection.className = "question-section";
+    childrenSection.appendChild(questionSectionHeading(I18n.t("childrenSectionTitle")));
+    makeDescendantEditor(childrenSection, data.self, callbacks);
+    container.appendChild(childrenSection);
 
-  // -- grandparents --
-  const grandparentsSection = document.createElement("div");
-  grandparentsSection.className = "question-section";
-  grandparentsSection.appendChild(questionSectionHeading(I18n.t("grandparentsTitle")));
-  grandparentsSection.appendChild(
-    makeQuestionPersonBlock("grandfather", data.grandfather, {
-      nameLabelKey: "grandfatherName",
-      jobLabelKey: "grandfatherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  grandparentsSection.appendChild(
-    makeQuestionPersonBlock("grandmother", data.grandmother, {
-      nameLabelKey: "grandmotherName",
-      jobLabelKey: "grandmotherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  grandparentsSection.appendChild(makeOriginQuestion(data, "grandparents", "originGrandQuestion"));
-  container.appendChild(grandparentsSection);
+    const siblingsSection = document.createElement("div");
+    siblingsSection.className = "question-section";
+    siblingsSection.appendChild(questionSectionHeading(I18n.t("siblingsYN")));
+    (data.siblings || []).forEach((sib, i) => {
+      siblingsSection.appendChild(
+        makeQuestionPersonBlock(siblingRole(sib.type), sib, {
+          nameLabelKey: "siblingName",
+          jobLabelKey: "siblingJobLabel",
+          showTypeSelect: true,
+          showLocation: "country",
+          onPersonChange: callbacks.onPersonChange,
+          onStructuralChange: callbacks.onStructuralChange,
+          onRemove: () => {
+            data.siblings.splice(i, 1);
+            callbacks.onStructuralChange();
+          },
+        })
+      );
+    });
+    if ((data.siblings || []).length < 6) {
+      const addBtn = document.createElement("button");
+      addBtn.className = "add-sibling-card";
+      addBtn.textContent = I18n.t("addSibling");
+      addBtn.addEventListener("click", () => {
+        data.siblings.push({ name: "", type: "youngerBrother", job: "", photo: null });
+        callbacks.onStructuralChange();
+      });
+      siblingsSection.appendChild(addBtn);
+    }
+    container.appendChild(siblingsSection);
+  }
 
-  // -- great-grandparents --
-  const greatGrandparentsSection = document.createElement("div");
-  greatGrandparentsSection.className = "question-section";
-  greatGrandparentsSection.appendChild(questionSectionHeading(I18n.t("greatGrandparentsTitle")));
-  greatGrandparentsSection.appendChild(
-    makeQuestionPersonBlock("greatgrandfather", data.greatGrandfather, {
-      nameLabelKey: "greatGrandfatherName",
-      jobLabelKey: "greatGrandfatherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  greatGrandparentsSection.appendChild(
-    makeQuestionPersonBlock("greatgrandmother", data.greatGrandmother, {
-      nameLabelKey: "greatGrandmotherName",
-      jobLabelKey: "greatGrandmotherJob",
-      onPersonChange: callbacks.onPersonChange,
-    })
-  );
-  greatGrandparentsSection.appendChild(makeOriginQuestion(data, "greatGrandparents", "originGGQuestion"));
-  container.appendChild(greatGrandparentsSection);
+  if (stage === 3) {
+    container.appendChild(
+      coupleSection(
+        null,
+        { role: "father", person: data.father, nameKey: "fatherName", jobKey: "fatherJob" },
+        { role: "mother", person: data.mother, nameKey: "motherName", jobKey: "motherJob" },
+        "parents",
+        data,
+        callbacks
+      )
+    );
+  }
+
+  if (stage === 4) {
+    container.appendChild(
+      coupleSection(
+        null,
+        { role: "grandfather", person: data.grandfather, nameKey: "grandfatherName", jobKey: "grandfatherJob" },
+        { role: "grandmother", person: data.grandmother, nameKey: "grandmotherName", jobKey: "grandmotherJob" },
+        "grandparents",
+        data,
+        callbacks
+      )
+    );
+    container.appendChild(
+      coupleSection(
+        "greatGrandparentsTitle",
+        { role: "greatgrandfather", person: data.greatGrandfather, nameKey: "greatGrandfatherName", jobKey: "greatGrandfatherJob" },
+        { role: "greatgrandmother", person: data.greatGrandmother, nameKey: "greatGrandmotherName", jobKey: "greatGrandmotherJob" },
+        "greatGrandparents",
+        data,
+        callbacks
+      )
+    );
+  }
 }
