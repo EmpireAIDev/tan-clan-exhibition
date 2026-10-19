@@ -288,3 +288,11 @@ html, body {
 
 /* family-branch cards on the A4: place + relation only, no "starts a new life…" line */
 .a4-sec-routes .rr-branch-story { display: none; }
+
+/* ---------- background artwork ---------- */
+/* family half: ink-wash scenery behind the surname story + tree */
+.a4-top { background: #fff url("../assets/a4-bg-family.webp") center / cover no-repeat; }
+.a4-panel { background: rgba(255, 252, 246, 0.74); }
+/* migration half: aged map paper. It is on the rotated block itself so the
+   map turns with the content and reads upright once folded. */
+.a4-rot { background: #F6EBD7 url("../assets/a4-bg-migration.webp") center / cover no-repeat; }

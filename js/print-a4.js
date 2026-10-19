@@ -87,7 +87,12 @@
         arrow.className = "a4-rarrow";
         row.appendChild(arrow);
       }
-      row.appendChild(buildPrintCard(stop, i, stops.length));
+      const card = buildPrintCard(stop, i, stops.length);
+      // The sheet uses the short postcard line per place (js/place-postcard.js),
+      // not the longer on-screen description.
+      const desc = card.querySelector(".journey-print-desc");
+      if (desc) desc.textContent = getPlacePostcard(stop.place, I18n.lang);
+      row.appendChild(card);
     });
     roots.appendChild(row);
     mount.appendChild(roots);
