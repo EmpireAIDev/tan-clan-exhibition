@@ -268,7 +268,7 @@
       setTimeout(() => {
         localStorage.removeItem("tanclan_visitor");
         window.location.href = "index.html";
-      }, 6000);
+      }, 30000);
     }
   }
   $("a4ThanksBack").addEventListener("click", () => history.back());
