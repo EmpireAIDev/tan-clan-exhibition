@@ -252,9 +252,32 @@
   window.addEventListener("beforeprint", redraw);
   window.addEventListener("afterprint", () => { scalePreview(); redraw(); });
 
+  // ---- thank-you screen once they have printed / saved ----
+  // Opened from the admin portal or the take-home page: leave the kiosk session
+  // alone and offer a Back button. On the kiosk: clear the visitor and return to
+  // the welcome screen after a moment, ready for the next person.
+  const fromElsewhere = !!document.referrer && /\/(admin|edit)\//.test(document.referrer);
+  let thanked = false;
+  function showThanks() {
+    if (thanked) return;
+    thanked = true;
+    $("a4Thanks").classList.add("open");
+    if (fromElsewhere) {
+      $("a4ThanksBack").hidden = false;
+    } else {
+      setTimeout(() => {
+        localStorage.removeItem("tanclan_visitor");
+        window.location.href = "index.html";
+      }, 6000);
+    }
+  }
+  $("a4ThanksBack").addEventListener("click", () => history.back());
+  window.addEventListener("afterprint", showThanks);
+
   $("a4Print").addEventListener("click", () => {
     redraw();
     window.print();
+    showThanks(); // window.print() returns once the dialog has closed
   });
   $("a4Back").addEventListener("click", () => {
     // opened from the admin portal or the take-home page: go back there, not to the kiosk

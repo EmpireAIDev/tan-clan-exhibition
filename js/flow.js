@@ -65,8 +65,8 @@
     });
   }
   function ensureShareLink() {
-    if (State.data.shareUrl) return;
-    syncReadyForPrint(10000)
+    if (State.data.shareUrl) return Promise.resolve();
+    return syncReadyForPrint(10000)
       .then(() => window.Sync.createShareLink(State.data))
       .then(() => State.save())
       .catch(() => {
@@ -241,22 +241,17 @@
     mapControl.replay();
   });
 
-  document.getElementById("printMapBtn").addEventListener("click", () => {
-    State.save();
-    window.location.href = "print-map.html";
-  });
-
   // Foldable A4 (family story + tree | migration path, rotated 180°) opens a
   // preview first; the visitor prints from there.
-  document.getElementById("printA4Btn").addEventListener("click", () => {
-    State.save();
-    window.location.href = "print-a4.html";
-  });
-
-  // ---- print ----
-  document.getElementById("printBtn").addEventListener("click", () => {
-    State.save();
-    window.location.href = "print.html";
+  // The sheet's first QR code needs the take-home link, which is created in the
+  // background when this screen opens: give it a few seconds to finish first.
+  document.getElementById("printA4Btn").addEventListener("click", (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    Promise.race([ensureShareLink(), new Promise((resolve) => setTimeout(resolve, 4000))]).then(() => {
+      State.save();
+      window.location.href = "print-a4.html";
+    });
   });
 
   // ---- settings modal ----

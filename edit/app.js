@@ -34,6 +34,9 @@ async function init() {
 
   data = snap.data();
   data.dialogueAnswers = data.dialogueAnswers || {};
+  data.origins = Object.assign({ greatGrandparents: null, grandparents: null, parents: null }, data.origins);
+  // the place pickers follow the language the visitor used at the kiosk
+  I18n.setLang(data.lang === "zh" ? "zh" : "en");
   loadingState.style.display = "none";
   editState.style.display = "block";
   if (data.submitted) submittedBanner.style.display = "block";
@@ -129,6 +132,13 @@ function personCard(container, title, person) {
   card.appendChild(photoField);
 
   container.appendChild(card);
+  return card;
+}
+
+// Called after any place changes: redraw the tree and queue the auto-save.
+function onPlaceChange() {
+  renderPreview();
+  queueSave();
 }
 
 // Intergenerational dialogue questions — never asked at the kiosk, only
@@ -191,24 +201,40 @@ function renderForm() {
   sectionTitle(formSections, "You");
   personCard(formSections, "You", data.self);
 
-  if (data.siblings && data.siblings.length) {
-    sectionTitle(formSections, "Brothers & Sisters");
-    data.siblings.forEach((sib, i) => {
-      personCard(formSections, `Sibling ${i + 1}`, sib);
+  // Children: names/photos plus the city each one lives in now.
+  const children = (data.self && data.self.children) || [];
+  if (children.length) {
+    sectionTitle(formSections, "Children");
+    children.forEach((child, i) => {
+      const card = personCard(formSections, `Child ${i + 1}`, child);
+      card.appendChild(makeLiveNowCard(child, onPlaceChange, "city"));
     });
   }
 
+  // Siblings: a sibling who moved abroad picks the country they live in now.
+  if (data.siblings && data.siblings.length) {
+    sectionTitle(formSections, "Brothers & Sisters");
+    data.siblings.forEach((sib, i) => {
+      const card = personCard(formSections, `Sibling ${i + 1}`, sib);
+      card.appendChild(makeLiveNowCard(sib, onPlaceChange, "country"));
+    });
+  }
+
+  // Ancestors: where the family came from (feeds the migration path).
   sectionTitle(formSections, "Parents");
   personCard(formSections, "Father", data.father);
   personCard(formSections, "Mother", data.mother);
+  formSections.appendChild(makeHometownCard(data, "parents", onPlaceChange));
 
   sectionTitle(formSections, "Grandparents");
   personCard(formSections, "Grandfather", data.grandfather);
   personCard(formSections, "Grandmother", data.grandmother);
+  formSections.appendChild(makeHometownCard(data, "grandparents", onPlaceChange));
 
   sectionTitle(formSections, "Great-Grandparents");
   personCard(formSections, "Great-Grandfather", data.greatGrandfather);
   personCard(formSections, "Great-Grandmother", data.greatGrandmother);
+  formSections.appendChild(makeHometownCard(data, "greatGrandparents", onPlaceChange));
 
   dialogueSection(formSections);
 }

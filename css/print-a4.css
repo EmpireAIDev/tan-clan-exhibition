@@ -269,6 +269,13 @@ html, body {
 .a4-mig-foot { flex: 0 0 auto; margin: 0; text-align: center; font-size: 2.5mm; font-style: italic; color: #5d6b78; letter-spacing: 0.1mm; }
 .a4-mig-foot span { font-style: normal; }
 
+/* ---------- thank-you screen (after Print / Save as PDF) ---------- */
+.a4-thanks { position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; background: #fff url("../assets/a4-bg-family.webp") center / cover no-repeat; color: var(--ink, #0D2B45); }
+.a4-thanks.open { display: flex; }
+.a4-thanks-logo { height: 96px; width: auto; }
+.a4-thanks h1 { margin: 6px 0 0; font-size: 44px; font-weight: 800; letter-spacing: 3px; }
+.a4-thanks p { margin: 0 0 12px; max-width: 520px; font-size: 18px; line-height: 1.5; color: var(--muted, #55708A); }
+
 /* ---------- print ---------- */
 @media print {
   html, body { background: #fff; height: auto; overflow: visible; }

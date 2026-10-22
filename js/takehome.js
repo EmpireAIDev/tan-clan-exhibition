@@ -3,6 +3,7 @@
 // kiosk touches the network (this file) versus the fully offline core.
 (function () {
   const btn = document.getElementById("getLinkBtn");
+  if (!btn) return; // the kiosk no longer shows this button (the A4 sheet carries the QR instead)
   const box = document.getElementById("shareBox");
   const qrMount = document.getElementById("shareQr");
   const linkText = document.getElementById("shareLinkText");
