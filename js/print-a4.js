@@ -274,11 +274,21 @@
   $("a4ThanksBack").addEventListener("click", () => history.back());
   window.addEventListener("afterprint", showThanks);
 
+  // Desktop browsers block inside window.print() until the dialog closes, so the
+  // thank-you screen can follow straight away. iPad/iPhone Safari does NOT block
+  // (the print sheet opens over the page while the script keeps running), so
+  // showing the thank-you screen, and starting its return-to-start timer, right
+  // after print() would pull the visitor away mid-setup. There we wait for
+  // "afterprint" (fired when the sheet closes) or for the visitor to tap Done.
   $("a4Print").addEventListener("click", () => {
     redraw();
+    const t0 = performance.now();
     window.print();
-    showThanks(); // window.print() returns once the dialog has closed
+    const blocked = performance.now() - t0 > 400;
+    if (blocked) showThanks();
+    else $("a4Done").hidden = false;
   });
+  $("a4Done").addEventListener("click", showThanks);
   $("a4Back").addEventListener("click", () => {
     // opened from the admin portal or the take-home page: go back there, not to the kiosk
     if (document.referrer && /\/(admin|edit)\//.test(document.referrer)) history.back();
