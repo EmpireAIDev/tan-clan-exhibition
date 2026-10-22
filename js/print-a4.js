@@ -126,7 +126,7 @@
       },
       {
         no: "02",
-        url: null, // TODO: link to the second survey
+        url: "https://forms.gle/ptCwmBorjp5QyaRcA", // second survey (Google Form)
         title: "Unlock 2× chances",
         en: "Complete a second survey to qualify for an extra chance to win.",
         zh: "完成第二份问卷，即可多一次中奖机会。",
