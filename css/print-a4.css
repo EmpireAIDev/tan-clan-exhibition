@@ -270,11 +270,23 @@ html, body {
 .a4-mig-foot span { font-style: normal; }
 
 /* ---------- thank-you screen (after Print / Save as PDF) ---------- */
-.a4-thanks { position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; background: #fff url("../assets/a4-bg-family.webp") center / cover no-repeat; color: var(--ink, #0D2B45); }
+.a4-thanks { position: fixed; inset: 0; z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px 16px; overflow: auto; text-align: center; background: #fff url("../assets/a4-bg-family.webp") center / cover no-repeat; color: #12365A; }
 .a4-thanks.open { display: flex; }
-.a4-thanks-logo { height: 96px; width: auto; }
-.a4-thanks h1 { margin: 6px 0 0; font-size: 44px; font-weight: 800; letter-spacing: 3px; }
-.a4-thanks p { margin: 0 0 12px; max-width: 520px; font-size: 18px; line-height: 1.5; color: var(--muted, #55708A); }
+.a4-thanks-logo { height: 72px; width: auto; }
+.a4-thanks h1 { margin: 2px 0 0; font-size: 46px; font-weight: 800; letter-spacing: 1px; line-height: 1.05; color: #0F2A52; }
+.a4-thanks-lede { margin: 0 0 6px; font-size: 20px; color: #4a5a6a; }
+.a4-thanks-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; width: 100%; max-width: 940px; }
+.a4-tcard { flex: 1 1 340px; max-width: 450px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 22px 20px; border: 1.5px solid #C99A2E; border-radius: 14px; background: rgba(255, 255, 255, 0.9); box-shadow: 0 8px 24px rgba(13, 43, 69, 0.08); }
+.a4-tcard h2 { margin: 0; font-size: 25px; font-weight: 800; line-height: 1.2; color: #0F2A52; }
+.a4-tcard h2.red { color: #B3170F; font-size: 28px; }
+.a4-tcard-body { margin: 0; font-size: 16px; line-height: 1.45; color: #4a5a6a; }
+.a4-tcard-quote { margin: 0; font-size: 15px; line-height: 1.45; color: #0F2A52; }
+.a4-tcard-cta { margin: 2px 0 0; font-size: 19px; font-weight: 800; color: #0F2A52; }
+.a4-tcard-cta.red { color: #B3170F; font-size: 24px; }
+.a4-tqr { width: 190px; height: 190px; margin: 6px 0 2px; padding: 8px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1.5px solid #9FB0C7; }
+.a4-tqr svg { width: 100%; height: 100%; display: block; }
+.a4-tqr.is-empty { color: #9FB0C7; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.a4-thanks-foot { margin: 4px 0 0; font-size: 15px; color: #4a5a6a; }
 
 /* ---------- print ---------- */
 @media print {
@@ -311,3 +323,11 @@ html, body {
 .a4-div-zh {
   font-family: "KaiTi", "KaiTi_GB2312", "楷体", "STKaiti", "Kaiti SC", "DFKai-SB", "標楷體", "BiauKai", "Noto Serif SC", serif;
 }
+
+/* QR card 03 ("How future-ready are you?"): several short bilingual lines, so
+   it runs a little tighter than the one-description cards to keep the row height. */
+.a4-qrcard.is-solid .a4-qr-text strong { font-size: 2.3mm; line-height: 1.2; }
+.a4-qrcard.is-solid .a4-qr-text strong.t-zh { margin-top: 0.3mm; font-size: 2.1mm; letter-spacing: 0; text-transform: none; }
+.a4-qrcard.is-solid .a4-qr-text p { margin-top: 0.4mm; font-size: 1.95mm; line-height: 1.2; }
+.a4-qrcard.is-solid .a4-qr-text p.cta { font-weight: 700; color: #fff; }
+.a4-qrcard.is-solid .a4-qr-text p.cta + p.cta { margin-top: 0; }

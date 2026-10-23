@@ -49,8 +49,34 @@
 
   renderFamilyTree($("treeMount"), data, { maxGeneration: 4 }); // same 4-generation cap as the A5 print
 
+  // QR targets shared by the sheet's QR cards and the thank-you screen.
+  const LEGACY_CHECK_URL = "https://events.ningpo.org.sg/legacy-check/";
+
   buildRoutes($("routesMount"));
   buildQrCards($("qrRow"));
+  fillThanksQr($("thanksQr1"), data.shareUrl, "YOUR FAMILY TREE");
+  fillThanksQr($("thanksQr3"), LEGACY_CHECK_URL, "FAMILY SELF-CHECK");
+
+  // QR boxes on the thank-you screen: #1 = this visitor's take-home page,
+  // #3 = the legacy check. A labelled empty box stands in if there is no link.
+  function fillThanksQr(box, url, fallbackLabel) {
+    let drawn = false;
+    if (url) {
+      try {
+        const qr = qrcode(0, "M");
+        qr.addData(url);
+        qr.make();
+        box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0 });
+        drawn = true;
+      } catch (e) {
+        /* nice-to-have, never block anything */
+      }
+    }
+    if (!drawn) {
+      box.classList.add("is-empty");
+      box.textContent = fallbackLabel;
+    }
+  }
 
   // "Where our roots began" (origin cards, same data/theme as the on-screen
   // journey) next to "Where the story continues" (siblings' and children's places).
@@ -133,10 +159,13 @@
       },
       {
         no: "03",
-        url: null, // TODO: link to the family legacy quiz / guide
-        title: "Your family legacy",
-        en: "Explore a legacy-planning quiz or guide. Resource coming soon.",
-        zh: "探索传承规划测验或指南，资源即将推出。",
+        url: LEGACY_CHECK_URL, // legacy check (Ningpo)
+        title: "How future-ready are you?",
+        titleZh: "面对未来，你准备好了吗？",
+        lines: [
+          { en: "For you. For your family.", zh: "为自己，也为家人。" },
+          { en: "Scan to find out.", zh: "扫码测一测", bold: true },
+        ],
         solid: true,
       },
     ];
@@ -171,13 +200,27 @@
       const strong = document.createElement("strong");
       strong.textContent = card.title;
       text.appendChild(strong);
-      const en = document.createElement("p");
-      en.textContent = card.en;
-      text.appendChild(en);
-      const zh = document.createElement("p");
-      zh.className = "zh";
-      zh.textContent = card.zh;
-      text.appendChild(zh);
+      if (card.titleZh) {
+        const tz = document.createElement("strong");
+        tz.className = "t-zh";
+        tz.textContent = card.titleZh;
+        text.appendChild(tz);
+      }
+      // a card is either one en/zh description, or several en/zh line pairs
+      const lines = card.lines || [{ en: card.en, zh: card.zh }];
+      lines.forEach((ln) => {
+        const en = document.createElement("p");
+        en.textContent = ln.en;
+        const zh = document.createElement("p");
+        zh.className = "zh";
+        zh.textContent = ln.zh;
+        if (ln.bold) {
+          en.classList.add("cta");
+          zh.classList.add("cta");
+        }
+        text.appendChild(en);
+        text.appendChild(zh);
+      });
       el.appendChild(text);
       row.appendChild(el);
     });
