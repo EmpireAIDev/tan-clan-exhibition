@@ -225,11 +225,10 @@ repos; it went offline once already when the repo was briefly made private.
 ## Known open items / not yet done
 
 - **The PDPA notice in the survey (`js/survey-questions.js`'s
-  `PDPA_NOTICE_PARAGRAPHS`) has a literal placeholder** —
-  `[INSERT PEK SEK TAN CLAN ASSOCIATION DPO / PRIVACY CONTACT EMAIL]` —
-  and per the brief must be reviewed/finalised by the Association's
-  DPO/privacy officer before this goes live at a real event. Don't fill
-  this in with an invented email.
+  `PDPA_NOTICE_PARAGRAPHS`)** now shows the privacy contact email supplied by the
+  Association (peksektanclan@gmail.com). Per the brief, the wording itself must
+  still be reviewed/finalised by the Association's DPO/privacy officer before
+  this goes live at a real event.
 - **The survey (`js/survey.js`) is English-only**, matching `edit/app.js`'s
   existing precedent — it does not switch with the kiosk's EN/中文 toggle.
   Worth revisiting if a real event needs it bilingual, especially since the

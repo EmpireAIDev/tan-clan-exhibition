@@ -57,8 +57,8 @@ const GENDERS = [
   { key: "prefer_not", en: "Prefer not to say", zh: "不愿透露" },
 ];
 
-// [INSERT PEK SEK TAN CLAN ASSOCIATION DPO / PRIVACY CONTACT EMAIL] below is
-// a deliberate placeholder — per the brief, this wording (English AND the
+// The privacy contact email below (peksektanclan@gmail.com) was supplied by the
+// Association. Per the brief, this wording (English AND the
 // Chinese translation added here) must be reviewed and finalised by the
 // Association's DPO/privacy officer before this form goes live at a real
 // event. The Chinese text is a good-faith translation, not a certified
@@ -81,8 +81,8 @@ const PDPA_NOTICE_PARAGRAPHS = [
     zh: "个人资料将根据新加坡《2012年个人资料保护法》（Personal Data Protection Act 2012）以及本会适用的隐私惯例处理。",
   },
   {
-    en: "Requests concerning access, correction or withdrawal of consent may be directed to: [INSERT PEK SEK TAN CLAN ASSOCIATION DPO / PRIVACY CONTACT EMAIL]",
-    zh: "如需查阅、更正个人资料或撤回同意，请联系：[请填写 PEK SEK TAN CLAN ASSOCIATION DPO／隐私联系邮箱]",
+    en: "Requests concerning access, correction or withdrawal of consent may be directed to: peksektanclan@gmail.com",
+    zh: "如需查阅、更正个人资料或撤回同意，请联系：peksektanclan@gmail.com",
   },
 ];
 
