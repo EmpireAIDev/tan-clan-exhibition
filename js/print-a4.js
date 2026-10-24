@@ -50,12 +50,12 @@
   renderFamilyTree($("treeMount"), data, { maxGeneration: 4 }); // same 4-generation cap as the A5 print
 
   // QR targets shared by the sheet's QR cards and the thank-you screen.
-  const LEGACY_CHECK_URL = "https://events.ningpo.org.sg/legacy-check/";
+  const FUTURE_READY_URL = "https://ask.calliecares.com/quiz-how-future-ready-are-you/";
 
   buildRoutes($("routesMount"));
   buildQrCards($("qrRow"));
   fillThanksQr($("thanksQr1"), data.shareUrl, "YOUR FAMILY TREE");
-  fillThanksQr($("thanksQr3"), LEGACY_CHECK_URL, "FAMILY SELF-CHECK");
+  fillThanksQr($("thanksQr3"), FUTURE_READY_URL, "FAMILY SELF-CHECK");
 
   // QR boxes on the thank-you screen: #1 = this visitor's take-home page,
   // #3 = the legacy check. A labelled empty box stands in if there is no link.
@@ -159,7 +159,7 @@
       },
       {
         no: "03",
-        url: LEGACY_CHECK_URL, // legacy check (Ningpo)
+        url: FUTURE_READY_URL, // "How future-ready are you?" quiz
         title: "How future-ready are you?",
         titleZh: "面对未来，你准备好了吗？",
         lines: [
